@@ -1,0 +1,20 @@
+{
+  "name": "vocara",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vocara: a free voice studio. Script in, voiceover, captions and timings out.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "prepare:web": "node scripts/prepare-web.mjs",
+    "serve": "node scripts/serve.mjs",
+    "cap:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@fontsource/literata": "^5.0.0",
+    "@fontsource/plus-jakarta-sans": "^5.0.0"
+  }
+}

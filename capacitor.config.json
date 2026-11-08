@@ -1,0 +1,8 @@
+{
+  "appId": "com.preciousbearing.vocara",
+  "appName": "Vocara",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -1,0 +1,68 @@
+/* Vocara design tokens. Light is the default. The dark theme is its own palette,
+   not an inversion: deep indigo ground, frosted panels, brighter accents. */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F6F5FB;
+  --bg-mesh-a: #DCE4FF;
+  --bg-mesh-b: #E9DDFF;
+  --bg-mesh-c: #FFE2D3;
+  --ink: #14122B;
+  --ink-2: #3A3757;
+  --ink-3: #5B5878;
+  --ink-faint: #A6A3BE;
+  --card: rgba(255, 255, 255, 0.78);
+  --card-solid: #FFFFFF;
+  --card-edge: #FFFFFF;
+  --line: #ECEAF6;
+  --shadow: 0 10px 30px rgba(50, 50, 130, 0.09);
+  --shadow-lift: 0 14px 34px rgba(50, 50, 130, 0.14);
+  --accent: #2F5BFF;
+  --accent-hi: #4B74FF;
+  --accent-ink: #FFFFFF;
+  --glow: rgba(47, 91, 255, 0.38);
+  --violet-bg: #EFE8FF;
+  --violet-ink: #4A2FC4;
+  --peach-bg: #FFE8DA;
+  --peach-ink: #A5471A;
+  --danger: #B3261E;
+  --danger-bg: #FDE7E5;
+  --ok: #17724A;
+  --ok-bg: #DDF4E8;
+  --wave-bg: #14122B;
+  --nav-bg: rgba(255, 255, 255, 0.85);
+  --scrim: rgba(20, 18, 43, 0.35);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0D0C1E;
+  --bg-mesh-a: #1B2250;
+  --bg-mesh-b: #2A1B55;
+  --bg-mesh-c: #3A2230;
+  --ink: #F2F1FB;
+  --ink-2: #CFCDE6;
+  --ink-3: #A9A6C6;
+  --ink-faint: #6F6C8C;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-solid: #1A1933;
+  --card-edge: rgba(255, 255, 255, 0.12);
+  --line: rgba(255, 255, 255, 0.09);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-lift: 0 14px 34px rgba(0, 0, 0, 0.5);
+  --accent: #5B82FF;
+  --accent-hi: #7B9AFF;
+  --accent-ink: #0B0A1E;
+  --glow: rgba(91, 130, 255, 0.45);
+  --violet-bg: rgba(154, 130, 255, 0.18);
+  --violet-ink: #CDBFFF;
+  --peach-bg: rgba(255, 180, 138, 0.16);
+  --peach-ink: #FFC9A8;
+  --danger: #FF9C94;
+  --danger-bg: rgba(255, 120, 110, 0.14);
+  --ok: #7FE0AE;
+  --ok-bg: rgba(90, 210, 150, 0.14);
+  --wave-bg: #07061A;
+  --nav-bg: rgba(26, 25, 51, 0.88);
+  --scrim: rgba(0, 0, 0, 0.55);
+}

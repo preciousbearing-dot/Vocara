@@ -1,0 +1,7 @@
+node_modules/
+android/
+www/fonts/*.woff2
+www/css/fonts.css
+*.keystore
+*.jks
+.DS_Store

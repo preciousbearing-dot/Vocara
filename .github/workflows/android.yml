@@ -1,0 +1,93 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Prepare web files (fonts)
+        run: npm run prepare:web
+
+      - name: Add Android project and sync
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build release APK (unsigned)
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK
+        env:
+          KEYSTORE_B64: ${{ secrets.VOCARA_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.VOCARA_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.VOCARA_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.VOCARA_KEY_PASSWORD }}
+        run: |
+          set -e
+          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          UNSIGNED=$(find android/app/build/outputs/apk/release -name '*.apk' | head -1)
+          echo "unsigned: $UNSIGNED"
+          mkdir -p out
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > release.keystore
+            "$BT/zipalign" -f -p 4 "$UNSIGNED" out/aligned.apk
+            "$BT/apksigner" sign --ks release.keystore --ks-pass "pass:$STORE_PASS" \
+              --ks-key-alias "$KEY_ALIAS" --key-pass "pass:$KEY_PASS" \
+              --out out/Vocara.apk out/aligned.apk
+            "$BT/apksigner" verify out/Vocara.apk
+            echo "SIGNED=release" >> "$GITHUB_ENV"
+          else
+            echo "No signing secrets: signing with a throwaway debug key (updates over a previous install will not work)."
+            keytool -genkeypair -keystore debug.keystore -storepass android -keypass android \
+              -alias debug -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Vocara Debug"
+            "$BT/zipalign" -f -p 4 "$UNSIGNED" out/aligned.apk
+            "$BT/apksigner" sign --ks debug.keystore --ks-pass pass:android --key-pass pass:android \
+              --out out/Vocara.apk out/aligned.apk
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+          fi
+          ls -l out
+
+      - name: Publish to release apk-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk-latest --cleanup-tag --yes || true
+          gh release create apk-latest out/Vocara.apk \
+            --title "Vocara (latest build)" \
+            --notes "Build of ${GITHUB_SHA::7}. Signed with: $SIGNED key." \
+            --prerelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Vocara-apk
+          path: out/Vocara.apk

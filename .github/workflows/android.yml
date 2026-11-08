@@ -36,9 +36,28 @@ jobs:
       - name: Prepare web files (fonts)
         run: npm run prepare:web
 
+      - name: Stamp build number
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "{\"build\":$GITHUB_RUN_NUMBER,\"version\":\"$VERSION\"}" > www/build.json
+          cat www/build.json
+          {
+            echo "build: $GITHUB_RUN_NUMBER"
+            echo "version: $VERSION"
+            echo
+            git log -1 --format=%B | grep -v -E '^(Co-Authored-By|Claude-Session):' | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}'
+          } > release-notes.md
+          cat release-notes.md
+
       - name: Add Android project and sync
         run: |
           npx cap add android
+          # Android only accepts an update when versionCode goes up, so tie it to the build number.
+          GRADLE=android/app/build.gradle
+          VERSION=$(node -p "require('./package.json').version")
+          sed -i -E "s/versionCode [0-9]+/versionCode $GITHUB_RUN_NUMBER/; s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" "$GRADLE"
+          grep -E "versionCode|versionName" "$GRADLE"
+          grep -q "versionCode $GITHUB_RUN_NUMBER" "$GRADLE" || { echo "versionCode not updated"; exit 1; }
           npx cap sync android
 
       - name: Build release APK (unsigned)
@@ -83,7 +102,7 @@ jobs:
           gh release delete apk-latest --cleanup-tag --yes || true
           gh release create apk-latest out/Vocara.apk \
             --title "Vocara (latest build)" \
-            --notes "Build of ${GITHUB_SHA::7}. Signed with: $SIGNED key." \
+            --notes-file release-notes.md \
             --prerelease
 
       - uses: actions/upload-artifact@v4

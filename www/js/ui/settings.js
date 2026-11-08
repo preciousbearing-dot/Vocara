@@ -1,6 +1,7 @@
 import { h, icon, toast } from '../dom.js';
 import { store, cache, hasKey, VERSION } from '../services.js';
 import { maskKey } from '../store.js';
+import { buildInfo, runCheck, openSheet } from '../updater.js';
 import { applyTheme } from '../theme.js';
 import { DEFAULT_MODEL, testKey } from '../gemini.js';
 
@@ -47,6 +48,20 @@ export function renderSettings(root, { go, rerender }) {
   };
   refreshCache();
 
+  const updLine = h('div', { class: 'd', text: 'Checking the installed version...' });
+  const versionLine = h('p', { class: 'sub center mt24', text: `Vocara ${VERSION}` });
+  const updBtn = h('button', { class: 'btn small', text: 'Check now' });
+  let cur = { build: 0, version: VERSION };
+  buildInfo().then((b) => { cur = b; updLine.textContent = b.build ? `Installed: ${b.version || VERSION}, build ${b.build}` : 'Installed: development copy'; versionLine.textContent = `Vocara ${b.version || VERSION}${b.build ? ` (build ${b.build})` : ''}`; });
+  updBtn.addEventListener('click', async () => {
+    updBtn.disabled = true; updBtn.textContent = 'Checking...';
+    const res = await runCheck({ manual: true });
+    updBtn.disabled = false; updBtn.textContent = 'Check now';
+    if (res.state === 'available') { updLine.textContent = `Update available: ${res.info.version || 'new build'}`; openSheet(res.info, res.current); }
+    else if (res.state === 'latest') toast('You have the latest version.');
+    else toast(res.message);
+  });
+
   wrap.append(
     h('div', { class: 'topbar' }, h('h1', { text: 'Settings' })),
 
@@ -86,6 +101,12 @@ export function renderSettings(root, { go, rerender }) {
           }
         } }, icon('trash', 18)))),
 
-    h('p', { class: 'sub center mt24', text: `Vocara ${VERSION}` }));
+    h('div', { class: 'label mt24', text: 'App updates' }),
+    h('div', { class: 'card mt8' },
+      h('div', { class: 'settings-row' },
+        h('div', { class: 'grow' }, h('div', { class: 't', text: 'Vocara updates' }), updLine),
+        updBtn)),
+
+    versionLine);
   root.append(wrap);
 }

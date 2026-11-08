@@ -34,6 +34,11 @@ def handle(route):
     else:
         route.fulfill(status=404, body='{}')
 
+RELEASE = {'body': 'build: 5\nversion: 0.2.0\n\nScene editor arrives\n\n- Split a script into scenes\n- Export captions', 'published_at': '2026-11-08T10:00:00Z',
+           'assets': [{'name': 'Vocara.apk', 'size': 7340032, 'browser_download_url': 'https://github.com/x/Vocara/releases/download/apk-latest/Vocara.apk'}]}
+def handle_gh(route):
+    route.fulfill(status=200, content_type='application/json', body=json.dumps(RELEASE))
+
 def shot(page, name):
     if SHOTS:
         os.makedirs(SHOTS, exist_ok=True)
@@ -50,6 +55,7 @@ try:
         page.on('pageerror', lambda e: errors.append(str(e)))
         page.on('console', lambda m: errors.append(m.text) if m.type == 'error' and 'fonts.css' not in m.text and '404' not in m.text else None)
         page.route('https://generativelanguage.googleapis.com/**', handle)
+        page.route('https://api.github.com/**', handle_gh)
         page.goto(f'http://127.0.0.1:{PORT}/')
 
         # Welcome tour
@@ -72,6 +78,13 @@ try:
         page.get_by_role('button', name='Save and continue').click()
         page.wait_for_selector('h1:has-text("What should we voice today?")')
         check('home after setup', True)
+        page.wait_for_selector('.sheet')
+        sheet = page.inner_text('.sheet')
+        check('update sheet shows version, size and notes', 'Vocara 0.2.0' in sheet and '7.0 MB' in sheet and 'Split a script into scenes' in sheet and 'Scene editor arrives' in sheet)
+        check('install link points at the release apk', page.get_attribute('.sheet a.btn', 'href').endswith('/apk-latest/Vocara.apk'))
+        shot(page, '03b-update-sheet')
+        page.get_by_role('button', name='Later').click()
+        check('Later closes the sheet', page.locator('.sheet').count() == 0)
         check('onboarded persisted', json.loads(page.evaluate("localStorage.getItem('vocara.settings.v1')"))['onboarded'] is True)
         check('key not in settings blob', KEY not in page.evaluate("localStorage.getItem('vocara.settings.v1')"))
         shot(page, '04-home')
@@ -101,6 +114,10 @@ try:
         shown = page.locator('.settings-row .d').first.inner_text()
         check('masked key shown, full key hidden', shown == KEY[:4] + '••••••••' + KEY[-4:] and KEY not in page.content())
         shot(page, '06-settings-light')
+        page.get_by_role('button', name='Check now').click()
+        page.wait_for_selector('.sheet')
+        check('manual check reopens the update sheet', 'Vocara 0.2.0' in page.inner_text('.sheet'))
+        page.get_by_role('button', name='Later').click()
         page.get_by_role('button', name='Dark').click()
         check('dark theme applied', page.evaluate("document.documentElement.dataset.theme") == 'dark')
         shot(page, '07-settings-dark')
@@ -112,6 +129,8 @@ try:
         shot(page, '09-home-dark')
         check('cache survives reload', True)
         page.reload()
+        page.wait_for_timeout(800)
+        check('dismissed update does not pop up again on reload', page.locator('.sheet').count() == 0)
         page.get_by_role('button', name='Voices').first.click()
         page.wait_for_selector('.voice:has-text("Charon") .chip.ok')
         check('saved chip persists after reload', True)

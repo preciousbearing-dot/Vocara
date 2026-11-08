@@ -149,3 +149,29 @@ test('there are 30 voices with unique names', () => {
   assert.equal(new Set(VOICES.map((v) => v.name)).size, 30);
   assert.equal(findVoice('Sulafat').trait, 'Warm');
 });
+
+import { parseRelease, formatSize, noteLines, checkForUpdate } from '../www/js/update.js';
+
+const rel = (body, size = 5 * 1024 * 1024) => ({ body, published_at: '2026-11-08', assets: [{ name: 'Vocara.apk', size, browser_download_url: 'https://x/Vocara.apk' }] });
+
+test('update: parses build, version, notes and size', () => {
+  const r = parseRelease(rel('build: 7\nversion: 0.2.0\n\n- Adds the scene editor\n- Fixes captions'));
+  assert.equal(r.build, 7);
+  assert.equal(r.version, '0.2.0');
+  assert.deepEqual(noteLines(r.notes), ['Adds the scene editor', 'Fixes captions']);
+  assert.equal(formatSize(r.size), '5.0 MB');
+  assert.equal(r.url, 'https://x/Vocara.apk');
+});
+
+test('update: rejects releases without build marker or apk', () => {
+  assert.equal(parseRelease(rel('no marker here')), null);
+  assert.equal(parseRelease({ body: 'build: 3', assets: [] }), null);
+});
+
+test('update: only newer builds count as available', async () => {
+  const f = (body) => async () => ({ ok: true, status: 200, json: async () => rel(body) });
+  assert.equal((await checkForUpdate({ currentBuild: 5, fetchImpl: f('build: 6\nversion: 1\n\nx') })).state, 'available');
+  assert.equal((await checkForUpdate({ currentBuild: 6, fetchImpl: f('build: 6\nversion: 1\n\nx') })).state, 'latest');
+  assert.equal((await checkForUpdate({ currentBuild: 0, fetchImpl: async () => ({ ok: false, status: 404 }) })).state, 'latest');
+  assert.equal((await checkForUpdate({ currentBuild: 0, fetchImpl: async () => { throw new Error('offline'); } })).state, 'error');
+});

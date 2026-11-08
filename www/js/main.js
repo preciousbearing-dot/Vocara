@@ -7,6 +7,7 @@ import { renderHome, renderLibrary } from './ui/home.js';
 import { renderVoices } from './ui/voices.js';
 import { renderSettings } from './ui/settings.js';
 import { toast } from './dom.js';
+import { autoCheckUpdate } from './updater.js';
 
 const app = document.getElementById('app');
 const NAV = [['home', 'Home', 'home'], ['voices', 'Voices', 'voices'], null, ['library', 'Library', 'library'], ['settings', 'Settings', 'settings']];
@@ -38,8 +39,8 @@ function render() {
   if (!s.onboarded) {
     if (route === 'key') {
       renderKeySetup(app, {
-        onDone: () => { store.set({ onboarded: true }); go('home'); },
-        onSkip: () => { store.set({ onboarded: true }); go('home'); },
+        onDone: () => { store.set({ onboarded: true }); go('home'); autoCheckUpdate(); },
+        onSkip: () => { store.set({ onboarded: true }); go('home'); autoCheckUpdate(); },
         onBack: () => go('welcome'),
       });
     } else {
@@ -66,3 +67,4 @@ function render() {
 applyTheme(store.get().theme);
 window.addEventListener('hashchange', render);
 render();
+if (store.get().onboarded) autoCheckUpdate();

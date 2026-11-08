@@ -18,5 +18,8 @@ Free-to-run voice studio. Script in, voiceover audio + captions out, using the o
 ## CI secrets (repo Settings > Secrets and variables > Actions)
 VOCARA_KEYSTORE_BASE64, VOCARA_KEYSTORE_PASSWORD, VOCARA_KEY_ALIAS, VOCARA_KEY_PASSWORD. Without them CI signs with a throwaway debug key so the APK still installs, but it cannot update a previous install.
 
+## Updates
+Every push to main builds and publishes release `apk-latest`. CI stamps `www/build.json` and Android `versionCode` with the run number (Android refuses updates otherwise) and uses the commit message as the update details: first line = headline, then `- bullets` of what is new, written for the user. Keep the signing keystore secrets unchanged forever or installed apps can no longer update.
+
 ## Not built yet
 Scene editor, export (wav/srt/timings), presets, quota queue, library, local MCP server.

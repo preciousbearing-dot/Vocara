@@ -8,8 +8,11 @@ export async function sha256Hex(str) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function cacheKey({ model, voice, style, text }) {
-  return sha256Hex(JSON.stringify([model || '', voice || '', (style || '').trim(), text]));
+// `take` is only part of the key when above 0, so take 0 keeps the key it always had.
+export function cacheKey({ model, voice, style, text, take = 0 }) {
+  const parts = [model || '', voice || '', (style || '').trim(), text];
+  if (take > 0) parts.push(take);
+  return sha256Hex(JSON.stringify(parts));
 }
 
 // In-memory adapter: used by tests and as a fallback when IndexedDB is missing.

@@ -22,4 +22,7 @@ VOCARA_KEYSTORE_BASE64, VOCARA_KEYSTORE_PASSWORD, VOCARA_KEY_ALIAS, VOCARA_KEY_P
 Every push to main builds and publishes release `apk-latest`. CI stamps `www/build.json` and Android `versionCode` with the run number (Android refuses updates otherwise) and uses the commit message as the update details: first line = headline, then `- bullets` of what is new, written for the user. Keep the signing keystore secrets unchanged forever or installed apps can no longer update.
 
 ## Not built yet
-Scene editor, export (wav/srt/timings), presets, quota queue, library, local MCP server.
+Local MCP server for Claude on the laptop, MP3 export (no encoder bundled; WAV only), true word alignment (word times are estimated), Android Keystore storage for the API key.
+
+## Tests
+`tests/ui_studio.py` drives Studio end to end (Gemini mocked). In Playwright sync tests use `page.wait_for_timeout`, never `time.sleep`: sleeping blocks dialog and network-mock events and gives false passes.

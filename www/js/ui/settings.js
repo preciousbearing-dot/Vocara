@@ -1,5 +1,5 @@
 import { h, icon, toast } from '../dom.js';
-import { store, cache, hasKey, VERSION } from '../services.js';
+import { store, cache, hasKey, VERSION, usage } from '../services.js';
 import { maskKey } from '../store.js';
 import { buildInfo, runCheck, openSheet } from '../updater.js';
 import { applyTheme } from '../theme.js';
@@ -48,6 +48,12 @@ export function renderSettings(root, { go, rerender }) {
   };
   refreshCache();
 
+  const guardInput = h('input', { class: 'input', id: 'guard', type: 'number', inputmode: 'numeric', min: '1', max: '1000', value: String(s.dailyGuard) });
+  const saveGuard = () => {
+    const n = Math.round(Number(guardInput.value));
+    if (!Number.isFinite(n) || n < 1) { toast('Enter a number of 1 or more.'); return; }
+    store.set({ dailyGuard: n }); toast('Guard saved.');
+  };
   const updLine = h('div', { class: 'd', text: 'Checking the installed version...' });
   const versionLine = h('p', { class: 'sub center mt24', text: `Vocara ${VERSION}` });
   const updBtn = h('button', { class: 'btn small', text: 'Check now' });
@@ -90,6 +96,11 @@ export function renderSettings(root, { go, rerender }) {
       h('div', { class: 'row' },
         h('button', { class: 'btn small', text: 'Save', onclick: saveModel }),
         h('button', { class: 'chip plain', text: 'Reset', onclick: () => { modelInput.value = DEFAULT_MODEL; saveModel(); } }))),
+
+    h('div', { class: 'label mt24', text: 'Quota guard' }),
+    h('div', { class: 'card mt8 stack' },
+      h('p', { class: 'sub', text: `Voice requests today: ${usage.today()}. Before a run that would pass the number below, Vocara asks first. This is your own safety limit, not Google's exact quota.` }),
+      h('div', { class: 'row' }, guardInput, h('button', { class: 'btn small', text: 'Save', onclick: saveGuard }))),
 
     h('div', { class: 'label mt24', text: 'Saved clips' }),
     h('div', { class: 'card mt8' },

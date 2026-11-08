@@ -11,6 +11,7 @@ export const DEFAULTS = Object.freeze({
   theme: 'system', // 'system' | 'light' | 'dark'
   model: DEFAULT_MODEL,
   voice: DEFAULT_VOICE,
+  dailyGuard: 40, // warn before a run would pass this many Gemini requests in a day (our own guard, not Google's limit)
 });
 
 export function createStore(storage) {

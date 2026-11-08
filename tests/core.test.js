@@ -175,3 +175,87 @@ test('update: only newer builds count as available', async () => {
   assert.equal((await checkForUpdate({ currentBuild: 0, fetchImpl: async () => ({ ok: false, status: 404 }) })).state, 'latest');
   assert.equal((await checkForUpdate({ currentBuild: 0, fetchImpl: async () => { throw new Error('offline'); } })).state, 'error');
 });
+
+import { trimSilence, normalizePcm } from '../www/js/wav.js';
+import { wordTimings, buildCues, tokenizeWords } from '../www/js/timing.js';
+import { planScenes, renderScene, assemble, outputsFor, requestsFor, claudeBundle } from '../www/js/engine.js';
+import { withRetry } from '../www/js/queue.js';
+
+function tone(ms, amp = 8000, rate = 24000) {
+  const n = Math.round((ms / 1000) * rate);
+  const out = new Uint8Array(n * 2);
+  const dv = new DataView(out.buffer);
+  for (let i = 0; i < n; i++) dv.setInt16(i * 2, Math.round(amp * Math.sin(i / 10)), true);
+  return out;
+}
+
+test('wav: trimSilence keeps the sound and drops long silence', () => {
+  const pcm = concatBytes([silencePcm(500), tone(300), silencePcm(800)]);
+  const t = trimSilence(pcm);
+  const ms = pcmDurationMs(t);
+  assert.ok(ms >= 300 && ms < 560, `got ${ms}`);
+  assert.equal(trimSilence(silencePcm(400)).length, 0);
+});
+
+test('wav: normalizePcm raises quiet audio and never clips', () => {
+  const quiet = tone(200, 500);
+  const loud = normalizePcm(quiet);
+  const peak = (b) => { const d = new DataView(b.buffer, b.byteOffset, b.byteLength); let m = 0; for (let i = 0; i < b.length / 2; i++) m = Math.max(m, Math.abs(d.getInt16(i * 2, true))); return m; };
+  assert.ok(peak(loud) > peak(quiet));
+  assert.ok(peak(normalizePcm(tone(200, 32000))) <= 32000);
+});
+
+test('timing: words share time by length and cover the whole span', () => {
+  const w = wordTimings('Hello, brave new world.', 1000, 2000);
+  assert.deepEqual(w.map((x) => x.w), ['Hello,', 'brave', 'new', 'world.']);
+  assert.equal(w[0].startMs, 1000);
+  assert.equal(w[w.length - 1].endMs, 3000);
+  for (let i = 1; i < w.length; i++) assert.equal(w[i].startMs, w[i - 1].endMs);
+  assert.deepEqual(tokenizeWords('[whispers] Quiet now'), ['Quiet', 'now']);
+});
+
+test('timing: captions break at sentence ends and size limits', () => {
+  const words = wordTimings('One two three. Four five six seven eight nine ten eleven.', 0, 10000);
+  const cues = buildCues(words);
+  assert.equal(cues[0].text, 'One two three.');
+  assert.ok(cues.every((c) => c.text.split(' ').length <= 7));
+});
+
+test('engine: plans scenes, renders with pauses, assembles a global timeline', async () => {
+  const scenes = planScenes('First line here.\n\nSecond one [pause 0.5s] continues.');
+  assert.equal(scenes.length, 2);
+  assert.equal(requestsFor(scenes[1]), 2);
+  const calls = [];
+  const getPcm = async ({ text }) => { calls.push(text); return { pcm: concatBytes([silencePcm(100), tone(1000), silencePcm(300)]), rate: 24000 }; };
+  const rendered = [];
+  for (const s of scenes) rendered.push(await renderScene(s, getPcm));
+  const tl = assemble(rendered, 400);
+  assert.equal(calls.length, 3);
+  assert.equal(tl.scenes[1].startMs, tl.scenes[0].endMs + 400);
+  assert.equal(tl.durationMs, pcmDurationMs(tl.pcm));
+  const pause = tl.scenes[1].parts.find((p) => p.type === 'pause');
+  assert.equal(pause.endMs - pause.startMs, 500);
+  const out = outputsFor(tl, { title: 'T', voice: 'Charon', model: 'm' });
+  assert.match(out.captionsSrt, /00:00:00,\d{3} --> /);
+  assert.equal(out.json.wordTimings, 'estimated');
+  assert.ok(out.json.scenes[1].words[0].startMs >= tl.scenes[1].startMs);
+  assert.match(claudeBundle(tl, { title: 'T' }), /## timings.json/);
+});
+
+test('queue: retries quota errors with waits, then gives up; other errors fail fast', async () => {
+  const waits = [];
+  let n = 0;
+  const ok = await withRetry(async () => { if (++n < 3) throw new GeminiError('quota', 'slow down', 429); return 'done'; }, { waits: [1, 2], sleepImpl: async (ms) => waits.push(ms) });
+  assert.equal(ok, 'done');
+  assert.deepEqual(waits, [1, 2]);
+  await assert.rejects(withRetry(async () => { throw new GeminiError('quota', 'x', 429); }, { waits: [1], sleepImpl: async () => {} }), /x/);
+  let calls = 0;
+  await assert.rejects(withRetry(async () => { calls++; throw new GeminiError('key', 'bad key', 403); }, { waits: [1, 2], sleepImpl: async () => {} }), /bad key/);
+  assert.equal(calls, 1);
+});
+
+test('cache: take 0 keeps the old key, higher takes differ', async () => {
+  const a = await cacheKey({ model: 'm', voice: 'v', style: '', text: 't' });
+  assert.equal(a, await cacheKey({ model: 'm', voice: 'v', style: '', text: 't', take: 0 }));
+  assert.notEqual(a, await cacheKey({ model: 'm', voice: 'v', style: '', text: 't', take: 1 }));
+});

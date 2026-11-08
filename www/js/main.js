@@ -6,6 +6,7 @@ import { renderKeySetup } from './ui/keysetup.js';
 import { renderHome, renderLibrary } from './ui/home.js';
 import { renderVoices } from './ui/voices.js';
 import { renderSettings } from './ui/settings.js';
+import { renderStudio } from './ui/studio.js';
 import { toast } from './dom.js';
 import { autoCheckUpdate } from './updater.js';
 
@@ -22,13 +23,17 @@ function currentRoute() {
   return (location.hash.replace(/^#\/?/, '') || 'home').split('?')[0];
 }
 
+function currentParams() {
+  return new URLSearchParams(location.hash.split('?')[1] || '');
+}
+
 function nav(route) {
   return h('nav', { class: 'nav', 'aria-label': 'Main' },
     NAV.map((n) => (n
       ? h('button', { 'aria-current': n[0] === route ? 'page' : null, onclick: () => go(n[0]) }, icon(n[2], 24), n[1])
       : h('span', { class: 'gap' }))),
     h('button', { class: 'centre', 'aria-label': 'New voiceover',
-      onclick: () => (hasKey() ? toast('The scene editor arrives in the next build.') : go('key')) }, icon('mic', 26)));
+      onclick: () => go(hasKey() ? 'studio' : 'key') }, icon('mic', 26)));
 }
 
 function render() {
@@ -58,10 +63,11 @@ function render() {
   let result;
   if (route === 'voices') result = renderVoices(app, ctx);
   else if (route === 'settings') renderSettings(app, ctx);
-  else if (route === 'library') renderLibrary(app);
+  else if (route === 'library') renderLibrary(app, ctx);
+  else if (route === 'studio') result = renderStudio(app, ctx, currentParams().get('id'));
   else renderHome(app, ctx);
   if (typeof result === 'function') cleanup = result;
-  app.append(nav(['voices', 'settings', 'library'].includes(route) ? route : 'home'));
+  app.append(nav(['voices', 'settings', 'library'].includes(route) ? route : (route === 'studio' ? '' : 'home')));
 }
 
 applyTheme(store.get().theme);

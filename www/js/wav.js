@@ -38,3 +38,37 @@ export function wavToPcm(wav) {
   const v = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
   return { rate: v.getUint32(24, true), pcm: wav.subarray(44) };
 }
+
+// Cuts leading/trailing near-silence, keeping a small pad so words are not clipped.
+export function trimSilence(pcm, rate = 24000, { threshold = 400, headMs = 40, tailMs = 120 } = {}) {
+  const n = pcm.length >> 1;
+  const dv = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength);
+  let first = -1; let last = -1;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(dv.getInt16(i * 2, true)) > threshold) { if (first < 0) first = i; last = i; }
+  }
+  if (first < 0) return pcm.slice(0, 0);
+  const head = Math.round((headMs * rate) / 1000);
+  const tail = Math.round((tailMs * rate) / 1000);
+  const start = Math.max(0, first - head);
+  const end = Math.min(n, last + 1 + tail);
+  return pcm.slice(start * 2, end * 2);
+}
+
+// Evens out loudness between clips: pulls each clip toward a target RMS without clipping.
+export function normalizePcm(pcm, { targetRms = 3000, peak = 31000, maxGain = 4 } = {}) {
+  const n = pcm.length >> 1;
+  if (!n) return pcm;
+  const dv = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength);
+  let sum = 0; let pk = 0;
+  for (let i = 0; i < n; i++) { const v = dv.getInt16(i * 2, true); sum += v * v; if (Math.abs(v) > pk) pk = Math.abs(v); }
+  const rms = Math.sqrt(sum / n);
+  if (rms < 1 || pk === 0) return pcm;
+  let gain = Math.min(maxGain, targetRms / rms);
+  if (pk * gain > peak) gain = peak / pk;
+  if (Math.abs(gain - 1) < 0.02) return pcm;
+  const out = new Uint8Array(pcm.length);
+  const od = new DataView(out.buffer);
+  for (let i = 0; i < n; i++) od.setInt16(i * 2, Math.max(-32768, Math.min(32767, Math.round(dv.getInt16(i * 2, true) * gain))), true);
+  return out;
+}

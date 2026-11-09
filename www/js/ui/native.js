@@ -38,3 +38,10 @@ export async function deliver(files, title = 'Vocara export') {
 export async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch (_) { return false; }
 }
+
+// The in-app updater (native plugin VocaraUpdate). null in a browser.
+export function updatePlugin() {
+  if (!isNative()) return null;
+  const cap = window.Capacitor;
+  try { return cap.registerPlugin ? cap.registerPlugin('VocaraUpdate') : ((cap.Plugins || {}).VocaraUpdate || null); } catch (_) { return null; }
+}

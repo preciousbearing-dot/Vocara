@@ -200,3 +200,6 @@ select.input { appearance: auto; }
 .proj { padding: 12px 16px; }
 .proj-open { text-align: left; background: none; border: 0; padding: 4px 0; font: inherit; color: inherit; }
 .proj-open .t { font-weight: 800; font-size: 16px; }
+.hidden { display: none !important; }
+.prog { height: 10px; border-radius: 999px; background: var(--card-edge); overflow: hidden; }
+.prog > i { display: block; height: 100%; width: var(--pct, 0%); border-radius: 999px; background: var(--accent, #2f5bff); transition: width 0.3s ease; }

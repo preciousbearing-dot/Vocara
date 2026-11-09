@@ -62,3 +62,15 @@ export async function checkForUpdate({ currentBuild, fetchImpl = fetch }) {
     return { state: 'error', message: 'Could not reach GitHub. Check your connection.' };
   }
 }
+
+// Progress text for the in-app download. st = { state, done, total, pct, speed, error, allowed }.
+export function progressText(st) {
+  if (!st) return '';
+  if (st.state === 'waiting') return 'Waiting for a connection...';
+  if (st.state === 'error') return st.error || 'The download stopped.';
+  if (st.state === 'ready') return 'Downloaded. Ready to install.';
+  const mb = (n) => (n / (1024 * 1024)).toFixed(1);
+  const part = st.total > 0 ? `${mb(st.done)} of ${mb(st.total)} MB` : `${mb(st.done)} MB`;
+  const speed = st.speed > 0 ? ` · ${(st.speed / (1024 * 1024)).toFixed(1)} MB/s` : '';
+  return `Downloading ${st.pct || 0}% · ${part}${speed}`;
+}

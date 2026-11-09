@@ -1,6 +1,7 @@
 // Glue: remembers the build, throttles auto checks, shows the sheet once per new build.
 import { checkForUpdate, getBuildInfo } from './update.js';
 import { showUpdateSheet } from './ui/update.js';
+import { updatePlugin } from './ui/native.js';
 
 const KEY = 'vocara.update.v1';
 const SIX_HOURS = 6 * 3600 * 1000;
@@ -17,7 +18,12 @@ export async function runCheck({ manual = false } = {}) {
   const cur = await buildInfo();
   const res = await checkForUpdate({ currentBuild: cur.build });
   if (res.state === 'available') write({ available: res.info, checkedAt: Date.now() });
-  else if (res.state === 'latest') write({ available: null, checkedAt: Date.now() });
+  else if (res.state === 'latest') {
+    write({ available: null, checkedAt: Date.now() });
+    // Running the newest build: the downloaded installer file is no longer needed.
+    const native = updatePlugin();
+    if (native && native.cleanup) { try { await native.cleanup(); } catch (_) { /* ignore */ } }
+  }
   return { ...res, current: cur };
 }
 

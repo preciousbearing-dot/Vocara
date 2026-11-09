@@ -52,12 +52,15 @@ jobs:
       - name: Add Android project and sync
         run: |
           npx cap add android
-          # Android only accepts an update when versionCode goes up, so tie it to the build number.
-          GRADLE=android/app/build.gradle
+          # In-app updater: native download + installer hand-off (same design as Stowra).
+          JAVA_DIR=android/app/src/main/java/com/preciousbearing/vocara
+          mkdir -p "$JAVA_DIR" android/app/src/main/res/xml
+          cp android-build/native/java/*.java "$JAVA_DIR"/
+          cp android-build/res/xml/*.xml android/app/src/main/res/xml/
           VERSION=$(node -p "require('./package.json').version")
-          sed -i -E "s/versionCode [0-9]+/versionCode $GITHUB_RUN_NUMBER/; s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" "$GRADLE"
-          grep -E "versionCode|versionName" "$GRADLE"
-          grep -q "versionCode $GITHUB_RUN_NUMBER" "$GRADLE" || { echo "versionCode not updated"; exit 1; }
+          # Android only accepts an update when versionCode goes up, so tie it to the build number.
+          python3 android-build/patch_android.py android "$GITHUB_RUN_NUMBER" "$VERSION"
+          grep -E "versionCode|versionName" android/app/build.gradle
           npx cap sync android
 
       - name: Build release APK (unsigned)

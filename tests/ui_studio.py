@@ -19,7 +19,8 @@ def check(name, cond):
 def tone_b64(ms=900, rate=24000, amp=7000):
     n = int(rate * ms / 1000)
     pcm = b''.join(struct.pack('<h', int(amp * math.sin(i / 9))) for i in range(n))
-    return base64.b64encode(b'\x00\x00' * 2400 + pcm + b'\x00\x00' * 4800).decode()
+    # a breath in the middle, so a [pause] can be placed inside one request
+    return base64.b64encode(b'\x00\x00' * 2400 + pcm + b'\x00\x00' * 7200 + pcm + b'\x00\x00' * 4800).decode()
 
 TONE = tone_b64()
 calls = {'speech': 0, 'texts': []}
@@ -88,16 +89,17 @@ try:
         page.wait_for_selector('.scene')
         page.wait_for_selector('.scene .chip.peach')
         check('two scenes shown', page.locator('.scene').count() == 2)
-        page.wait_for_selector('#generate[data-pending="3"]')
-        check('plan counts 3 new requests (pause splits scene 2)', '3 new' in page.inner_text('#generate'))
+        page.wait_for_selector('#generate[data-pending="2"]')
+        check('plan counts 2 new requests (the pause no longer costs one)', '2 new' in page.inner_text('#generate'))
         shot(page, 's1-studio')
 
         # Generate
         page.click('#generate')
         page.wait_for_selector('#result', timeout=30000)
-        check('3 Gemini requests made', calls['speech'] == 3)
+        check('2 Gemini requests made', calls['speech'] == 2)
         check('style prefix reached the model', all(t.startswith('Say in a calm, deep documentary') for t in calls['texts']))
         check('pause tag was not sent to the model', not any('pause' in t for t in calls['texts']))
+        check('scene with a pause went out as one request', any(t.endswith('Scene two continues here.') for t in calls['texts']))
         result_text = page.inner_text('#result')
         check('result shows duration', 'Voiceover ready' in result_text)
         shot(page, 's2-result')
@@ -108,7 +110,7 @@ try:
         page.click('#generate')
         page.wait_for_selector('#result')
         page.wait_for_timeout(500)
-        check('rebuild made no new requests', calls['speech'] == 3)
+        check('rebuild made no new requests', calls['speech'] == 2)
 
         # Exports (browser downloads)
         got = []
@@ -142,17 +144,17 @@ try:
         page.locator('.scene').first.get_by_role('button', name='New take').click()
         page.wait_for_selector('.scene .chip:has-text("Take 2")')
         for _ in range(60):
-            if calls['speech'] >= 4: break
+            if calls['speech'] >= 3: break
             page.wait_for_timeout(100)
         page.wait_for_timeout(500)
-        check('new take made exactly one request (got %d)' % (calls['speech'] - 3), calls['speech'] == 4)
+        check('new take made exactly one request (got %d)' % (calls['speech'] - 2), calls['speech'] == 3)
         check('first take is still available', page.locator('.scene').first.get_by_role('button', name='Previous take').count() == 1)
         page.locator('.scene').first.get_by_role('button', name='Previous take').click()
         page.wait_for_selector('.scene .chip.ok')
         page.click('#generate')
         page.wait_for_selector('#result')
         page.wait_for_timeout(500)
-        check('going back to take 1 is free', calls['speech'] == 4)
+        check('going back to take 1 is free', calls['speech'] == 3)
 
         # Library
         page.get_by_role('button', name='Library').first.click()
@@ -166,7 +168,7 @@ try:
         page.wait_for_selector('.scene .chip.ok')
         page.click('#generate'); page.wait_for_selector('#result')
         page.wait_for_timeout(400)
-        check('reopened project rebuilds from the cache for free', calls['speech'] == 4)
+        check('reopened project rebuilds from the cache for free', calls['speech'] == 3)
 
         # Quota guard
         page.evaluate("""() => { const s = JSON.parse(localStorage.getItem('vocara.settings.v1')); s.dailyGuard = 5; localStorage.setItem('vocara.settings.v1', JSON.stringify(s)); }""")

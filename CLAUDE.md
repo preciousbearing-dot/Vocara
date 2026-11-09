@@ -24,6 +24,9 @@ Every push to main builds and publishes release `apk-latest`. CI stamps `www/bui
 ## In-app update (native)
 Never send the person to a browser to download. The native plugin `VocaraUpdate` (android-build/native/java, copied into the generated Android project by CI, wired by android-build/patch_android.py) downloads the APK inside the app with progress, then hands it to Android's installer. Design copied from Stowra (`StowraUpdatePlugin.java`). Browser fallback exists only for the web build. `tests/ui_update.py` checks the flow with a fake plugin.
 
+## Quota and speed
+Gemini free quota is per model. `www/js/models.js` rotates to the next TTS model when one hits its limit (the user's chosen model first, others discovered from the key). Clips are cached under the model the user chose, whatever model made them. A scene with `[pause]` tags is ONE request: `engine.splitAtGaps` places the pauses at the natural breaths (`wav.findGap`) and falls back to one request per piece only when no clean breath exists. Retry waits follow Google's retry delay.
+
 ## Not built yet
 Local MCP server for Claude on the laptop, MP3 export (no encoder bundled; WAV only), true word alignment (word times are estimated), Android Keystore storage for the API key.
 

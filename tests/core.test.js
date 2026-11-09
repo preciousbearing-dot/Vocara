@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { parseScript, splitScenes } from '../www/js/tags.js';
 import { pcmToWav, wavToPcm, silencePcm, pcmDurationMs, concatBytes } from '../www/js/wav.js';
 import { srtTime, buildSrt } from '../www/js/srt.js';
-import { buildPrompt, buildSynthBody, synth, testKey, GeminiError, sampleRateFromMime } from '../www/js/gemini.js';
+import { buildPrompt, buildSynthBody, synth, testKey, GeminiError, sampleRateFromMime, parseErrorBody } from '../www/js/gemini.js';
+import { rankModels, modelOrder, createRest, synthRotating } from '../www/js/models.js';
 import { createCache, memoryAdapter, cacheKey } from '../www/js/cache.js';
 import { createStore, maskKey, looksLikeKey, DEFAULTS } from '../www/js/store.js';
 import { VOICES, findVoice } from '../www/js/voices.js';
@@ -224,13 +225,15 @@ test('timing: captions break at sentence ends and size limits', () => {
 test('engine: plans scenes, renders with pauses, assembles a global timeline', async () => {
   const scenes = planScenes('First line here.\n\nSecond one [pause 0.5s] continues.');
   assert.equal(scenes.length, 2);
-  assert.equal(requestsFor(scenes[1]), 2);
+  assert.equal(requestsFor(scenes[1]), 1);
   const calls = [];
-  const getPcm = async ({ text }) => { calls.push(text); return { pcm: concatBytes([silencePcm(100), tone(1000), silencePcm(300)]), rate: 24000 }; };
+  // one spoken clip with a natural breath in the middle, which is where the pause tag lands
+  const getPcm = async ({ text }) => { calls.push(text); return { pcm: concatBytes([silencePcm(100), tone(800), silencePcm(300), tone(800), silencePcm(200)]), rate: 24000 }; };
   const rendered = [];
   for (const s of scenes) rendered.push(await renderScene(s, getPcm));
   const tl = assemble(rendered, 400);
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1], 'Second one continues.');
   assert.equal(tl.scenes[1].startMs, tl.scenes[0].endMs + 400);
   assert.equal(tl.durationMs, pcmDurationMs(tl.pcm));
   const pause = tl.scenes[1].parts.find((p) => p.type === 'pause');
@@ -258,4 +261,65 @@ test('cache: take 0 keeps the old key, higher takes differ', async () => {
   const a = await cacheKey({ model: 'm', voice: 'v', style: '', text: 't' });
   assert.equal(a, await cacheKey({ model: 'm', voice: 'v', style: '', text: 't', take: 0 }));
   assert.notEqual(a, await cacheKey({ model: 'm', voice: 'v', style: '', text: 't', take: 1 }));
+});
+
+test('engine: without a clear breath it falls back to one request per piece', async () => {
+  const [scene] = planScenes('Alpha beta gamma. [pause 0.5s] Delta epsilon zeta.');
+  const calls = [];
+  const getPcm = async ({ text }) => { calls.push(text); return { pcm: concatBytes([silencePcm(50), tone(1500), silencePcm(100)]), rate: 24000 }; };
+  const r = await renderScene(scene, getPcm);
+  assert.equal(calls.length, 3);
+  assert.equal(r.parts.filter((p) => p.type === 'pause').length, 1);
+});
+
+test('models: ranks newest first, user choice stays first', () => {
+  assert.deepEqual(rankModels(['gemini-2.5-flash-preview-tts', 'gemini-3.1-flash-tts-preview', 'gemini-3.1-flash-lite-tts', 'gemini-3.1-flash-tts']),
+    ['gemini-3.1-flash-tts', 'gemini-3.1-flash-tts-preview', 'gemini-3.1-flash-lite-tts', 'gemini-2.5-flash-preview-tts']);
+  assert.deepEqual(modelOrder('b-tts', ['a-tts', 'b-tts']), ['b-tts', 'a-tts']);
+});
+
+test('models: a model that hits its limit rests and the next one answers', async () => {
+  let t = 0;
+  const rest = createRest(() => t);
+  const asked = [];
+  const synthOne = async (m) => { asked.push(m); if (m === 'a') throw new GeminiError('quota', 'limit', 429, { retryAfter: 30 }); return { pcm: new Uint8Array(4), rate: 24000 }; };
+  const r = await synthRotating({ order: ['a', 'b'], rest, synthOne });
+  assert.equal(r.model, 'b');
+  assert.ok(rest.isResting('a'));
+  asked.length = 0;
+  await synthRotating({ order: ['a', 'b'], rest, synthOne });
+  assert.deepEqual(asked, ['b']); // a is skipped while resting
+  t = 31000;
+  assert.equal(rest.isResting('a'), false);
+});
+
+test('models: when every model is resting the error says how long', async () => {
+  const rest = createRest(() => 0);
+  const synthOne = async () => { throw new GeminiError('quota', 'limit', 429, { retryAfter: 40 }); };
+  await assert.rejects(synthRotating({ order: ['a', 'b'], rest, synthOne }), (e) => e.kind === 'quota' && e.retryAfter === 40);
+  await assert.rejects(synthRotating({ order: ['a', 'b'], rest, synthOne }), (e) => e.kind === 'quota' && /resting/.test(e.message));
+});
+
+test('models: an unavailable model is skipped; other errors stop at once', async () => {
+  const rest = createRest();
+  const r = await synthRotating({ order: ['x', 'y'], rest, synthOne: async (m) => { if (m === 'x') throw new GeminiError('model', 'nope', 404); return { pcm: new Uint8Array(2), rate: 24000 }; } });
+  assert.equal(r.model, 'y');
+  await assert.rejects(synthRotating({ order: ['k', 'z'], rest: createRest(), synthOne: async () => { throw new GeminiError('key', 'bad', 403); } }), /bad/);
+});
+
+test('gemini: reads the retry delay and daily flag out of a 429 body', () => {
+  assert.equal(parseErrorBody({ error: { message: 'Please retry in 12.5s.' } }).retryAfter, 12.5);
+  assert.equal(parseErrorBody({ error: { message: 'x', details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '33s' }] } }).retryAfter, 33);
+  assert.equal(parseErrorBody({ error: { message: 'Quota exceeded for requests per day' } }).daily, true);
+  assert.equal(parseErrorBody({ error: { message: 'slow down' } }).daily, false);
+});
+
+test('queue: waits as long as Google asked, and does not retry a daily limit', async () => {
+  const waits = [];
+  let n = 0;
+  await withRetry(async () => { if (++n < 2) throw new GeminiError('quota', 'x', 429, { retryAfter: 20 }); return 1; }, { waits: [1], sleepImpl: async (ms) => waits.push(ms) });
+  assert.deepEqual(waits, [20500]);
+  let calls = 0;
+  await assert.rejects(withRetry(async () => { calls++; throw new GeminiError('quota', 'day', 429, { daily: true }); }, { waits: [1, 2], sleepImpl: async () => {} }), /day/);
+  assert.equal(calls, 1);
 });

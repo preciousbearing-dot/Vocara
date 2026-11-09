@@ -1,7 +1,8 @@
 // App-wide singletons and the one function that turns text into a cached clip.
 import { createStore } from './store.js';
 import { createCache, idbAdapter, memoryAdapter } from './cache.js';
-import { synth } from './gemini.js';
+import { synth, testKey } from './gemini.js';
+import { modelOrder, createRest, synthRotating } from './models.js';
 import { pcmToWav, pcmDurationMs, wavToPcm } from './wav.js';
 import { PREVIEW_LINE } from './voices.js';
 import { createUsage } from './usage.js';
@@ -18,14 +19,39 @@ export function hasKey() {
   return store.getKey().length > 0;
 }
 
+const MODELS_KEY = 'vocara.models.v1';
+const rest = createRest();
+
+function readModels() {
+  try { const v = JSON.parse(window.localStorage.getItem(MODELS_KEY)); if (v && Array.isArray(v.names)) return v; } catch (_) { /* none yet */ }
+  return { names: [], at: 0 };
+}
+
+// The voice models this key can reach. Listing costs no speech quota; checked once a day.
+export async function discoverModels(force = false) {
+  const saved = readModels();
+  if (!force && saved.names.length && Date.now() - saved.at < 864e5) return saved.names;
+  try {
+    const r = await testKey({ key: store.getKey() });
+    window.localStorage.setItem(MODELS_KEY, JSON.stringify({ names: r.ttsModels, at: Date.now() }));
+    return r.ttsModels;
+  } catch (_) { return saved.names; }
+}
+
 // Generates (or recalls) one clip. Only a cache miss touches the network.
+// The clip is stored under the model the user picked, even when a backup model made it,
+// so asking again later is free either way.
 export async function clip({ voice, text, style = '', model, take = 0 }) {
   const s = store.get();
-  const params = { model: model || s.model, voice, style, text, take };
+  const wanted = model || s.model;
+  const params = { model: wanted, voice, style, text, take };
   return cache.getOrMake(params, async () => {
-    const { pcm, rate } = await synth({ key: store.getKey(), ...params });
+    const order = modelOrder(wanted, await discoverModels());
+    const { pcm, rate, model: used } = await synthRotating({
+      order, rest, synthOne: (m) => synth({ key: store.getKey(), voice, text, style, model: m }),
+    });
     usage.bump();
-    return { wav: pcmToWav(pcm, rate), rate, ms: pcmDurationMs(pcm, rate) };
+    return { wav: pcmToWav(pcm, rate), rate, ms: pcmDurationMs(pcm, rate), model: used };
   });
 }
 
@@ -33,7 +59,7 @@ export async function clip({ voice, text, style = '', model, take = 0 }) {
 export async function clipPcm(params) {
   const { value, cached } = await clip(params);
   const { pcm, rate } = wavToPcm(value.wav);
-  return { pcm, rate, cached };
+  return { pcm, rate, cached, model: value.model || '' };
 }
 
 export async function isCached({ voice, text, style = '', take = 0 }) {

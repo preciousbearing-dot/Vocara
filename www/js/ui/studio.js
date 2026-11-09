@@ -2,13 +2,13 @@ import { h, icon, toast } from '../dom.js';
 import { store, hasKey, usage, projects, clipPcm, isCached } from '../services.js';
 import { VOICES } from '../voices.js';
 import { PRESETS } from '../presets.js';
-import { planScenes, renderScene, assemble, outputsFor, claudeBundle, requestsFor, estimateSeconds } from '../engine.js';
+import { planScenes, renderScene, assemble, outputsFor, claudeBundle, requestsFor, requestTexts, estimateSeconds } from '../engine.js';
 import { withRetry, sleep } from '../queue.js';
 import { pcmToWav } from '../wav.js';
 import { playWav, stopAudio } from '../audio.js';
 import { deliver, copyText } from './native.js';
 
-const PACE_MS = 1200; // breathing room between paid requests
+const PACE_MS = 400; // breathing room between paid requests
 
 const slug = (t) => (t || 'voiceover').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'voiceover';
 
@@ -17,6 +17,7 @@ export function renderStudio(root, { go }, id) {
   let scenes = planScenes(project.script);
   let result = null; // { timeline, files }
   let busy = null; // AbortController while generating
+  const usedModels = new Set();
   let statusToken = 0;
   let saveTimer = null;
   let rebuildTimer = null;
@@ -97,7 +98,7 @@ export function renderStudio(root, { go }, id) {
     let pending = 0;
     for (const r of rows) {
       let missing = 0;
-      for (const part of r.scene.parts) if (part.type === 'text' && !(await isCached({ ...params(r.scene), text: part.text }))) missing++;
+      for (const text of requestTexts(r.scene)) if (!(await isCached({ ...params(r.scene), text }))) missing++;
       if (token !== statusToken) return;
       pending += missing;
       r.status.textContent = missing ? `${missing} new` : 'Saved';
@@ -115,7 +116,7 @@ export function renderStudio(root, { go }, id) {
 
   async function pendingFor(list) {
     let n = 0;
-    for (const s of list) for (const part of s.parts) if (part.type === 'text' && !(await isCached({ ...params(s), text: part.text }))) n++;
+    for (const s of list) for (const text of requestTexts(s)) if (!(await isCached({ ...params(s), text }))) n++;
     return n;
   }
 
@@ -132,6 +133,7 @@ export function renderStudio(root, { go }, id) {
   function makeGetPcm(scene, signal, onWait) {
     return ({ text }) => withRetry(async () => {
       const got = await clipPcm({ ...params(scene), text });
+      if (got.model) usedModels.add(got.model);
       if (!got.cached) { updateQuota(); await sleep(PACE_MS, signal); }
       return got;
     }, { signal, onWait });
@@ -148,14 +150,18 @@ export function renderStudio(root, { go }, id) {
     const stopBtn = h('button', { class: 'btn ghost block', text: 'Stop', onclick: () => ctl.abort() });
     try {
       const rendered = [];
+      usedModels.clear();
       for (const scene of scenes) {
         const note = h('div', { class: 'notice', text: `Scene ${scene.index + 1} of ${scenes.length}…` });
         progress.replaceChildren(note, stopBtn);
         rendered.push(await renderScene(scene, makeGetPcm(scene, ctl.signal, (secs, n) => { note.textContent = `Google asked us to slow down. Retrying scene ${scene.index + 1} in ${secs}s (try ${n}).`; })));
+        paintScenes(); // finished scenes show Saved and can be played right away
       }
       const timeline = assemble(rendered, project.gapMs);
       result = { timeline };
       progress.replaceChildren();
+      const backups = [...usedModels].filter((m) => m && m !== store.get().model);
+      if (backups.length) progress.replaceChildren(h('div', { class: 'notice', text: `Some scenes used a backup voice model (${backups.join(', ')}) because ${store.get().model} hit its limit. If a scene sounds different, tap New take on it later.` }));
       paintResult();
     } catch (e) {
       if (e && e.name === 'AbortError') say(progress, 'Stopped. Finished scenes are saved, so you can continue later at no extra cost.');
@@ -165,10 +171,11 @@ export function renderStudio(root, { go }, id) {
 
   // ---- single scene actions
   async function playScene(scene, btn) {
-    if (busy) { toast('Wait for the current run to finish.'); return; }
     if (btn.dataset.playing === '1') { stopAudio(); return; }
-    if (!(await confirmSpend([scene]))) return;
-    const ctl = new AbortController(); busy = ctl;
+    const during = Boolean(busy); // a run is going: only scenes that are already saved can play
+    if (during && (await pendingFor([scene])) > 0) { toast('Wait for this scene to finish, or stop the run.'); return; }
+    if (!during && !(await confirmSpend([scene]))) return;
+    const ctl = new AbortController(); if (!during) busy = ctl;
     btn.dataset.playing = '1'; btn.replaceChildren(icon('stop', 18));
     try {
       const r = await renderScene(scene, makeGetPcm(scene, ctl.signal, (secs) => toast(`Quota is busy. Retrying in ${secs}s.`)));

@@ -1,7 +1,7 @@
 // Turns a script into scenes, scenes into audio, and audio into a timeline.
 // No DOM and no network here: audio comes from the injected getPcm().
 import { parseScript, splitScenes } from './tags.js';
-import { concatBytes, normalizePcm, pcmDurationMs, silencePcm, trimSilence } from './wav.js';
+import { concatBytes, findGap, normalizePcm, pcmDurationMs, silencePcm, trimSilence } from './wav.js';
 import { buildCues, wordCues, wordTimings } from './timing.js';
 import { buildSrt } from './srt.js';
 
@@ -12,7 +12,31 @@ export function planScenes(script) {
   return splitScenes(script).map((text, index) => ({ index, text, parts: parseScript(text) }));
 }
 
-export const requestsFor = (scene) => scene.parts.filter((p) => p.type === 'text').length;
+// A scene with pauses in it is spoken in ONE request; the pauses are placed afterwards at
+// the natural breaths in the audio. These are the texts that need a clip for a scene.
+export function requestTexts(scene) {
+  const texts = scene.parts.filter((p) => p.type === 'text').map((p) => p.text);
+  return texts.length > 1 && scene.parts.some((p) => p.type === 'pause') ? [texts.join(' ')] : texts;
+}
+
+export const requestsFor = (scene) => requestTexts(scene).length;
+
+// Cuts one spoken clip at the breaths nearest where each pause belongs.
+// lengths = characters of each text part. Returns the pieces, or null when a clean cut is not found.
+export function splitAtGaps(pcm, rate, lengths) {
+  const total = lengths.reduce((a, b) => a + b, 0);
+  const cuts = [];
+  let acc = 0; let from = 0;
+  for (let i = 0; i < lengths.length - 1; i++) {
+    acc += lengths[i];
+    const at = findGap(pcm, rate, acc / total, { fromSample: from });
+    if (at < 0) return null;
+    cuts.push(at); from = at;
+  }
+  const pieces = []; let prev = 0;
+  for (const c of [...cuts, pcm.length >> 1]) { pieces.push(pcm.slice(prev * 2, c * 2)); prev = c; }
+  return pieces;
+}
 
 export function estimateSeconds(scene) {
   const chars = scene.parts.reduce((a, p) => a + (p.type === 'text' ? p.text.length : 0), 0);
@@ -26,15 +50,26 @@ export async function renderScene(scene, getPcm) {
   const parts = [];
   let ms = 0;
   let rate = 24000;
+  const textParts = scene.parts.filter((p) => p.type === 'text');
+  // One request for the whole scene when it has pauses; fall back to one per piece if no clean cut exists.
+  let pieces = null;
+  if (requestTexts(scene).length === 1 && textParts.length > 1) {
+    const got = await getPcm({ text: requestTexts(scene)[0], scene });
+    rate = got.rate;
+    pieces = splitAtGaps(got.pcm, rate, textParts.map((p) => p.text.length));
+  }
+  let ti = 0;
   for (const part of scene.parts) {
     if (part.type === 'pause') {
       chunks.push(silencePcm(part.ms, rate));
       parts.push({ type: 'pause', startMs: ms, endMs: ms + part.ms });
       ms += part.ms;
     } else {
-      const got = await getPcm({ text: part.text, scene });
-      rate = got.rate;
-      const pcm = normalizePcm(trimSilence(got.pcm, rate));
+      let raw;
+      if (pieces) raw = pieces[ti];
+      else { const got = await getPcm({ text: part.text, scene }); rate = got.rate; raw = got.pcm; }
+      ti++;
+      const pcm = normalizePcm(trimSilence(raw, rate));
       const dur = pcmDurationMs(pcm, rate);
       chunks.push(pcm);
       parts.push({ type: 'text', text: part.text, startMs: ms, endMs: ms + dur, words: wordTimings(part.text, ms, dur) });

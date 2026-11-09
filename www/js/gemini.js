@@ -7,11 +7,13 @@ export const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 export const DEFAULT_MODEL = 'gemini-3.1-flash-tts-preview';
 
 export class GeminiError extends Error {
-  constructor(kind, message, status) {
+  constructor(kind, message, status, extra = {}) {
     super(message);
     this.name = 'GeminiError';
     this.kind = kind; // 'key' | 'quota' | 'model' | 'network' | 'empty' | 'server' | 'request'
     this.status = status || 0;
+    this.retryAfter = extra.retryAfter || 0; // seconds Google asked us to wait, when it said
+    this.daily = Boolean(extra.daily); // true when the limit is a per-day one
   }
 }
 
@@ -45,20 +47,31 @@ export function sampleRateFromMime(mime, fallback = 24000) {
   return m ? parseInt(m[1], 10) : fallback;
 }
 
-async function readError(res) {
-  let msg = '';
-  try {
-    const j = await res.json();
-    msg = (j && j.error && j.error.message) || '';
-  } catch (_) { /* body was not json */ }
-  return msg;
+// Pulls the message, and any "retry in N s" hint, out of a Google error body.
+export function parseErrorBody(json) {
+  const err = (json && json.error) || {};
+  const msg = err.message || '';
+  let retryAfter = 0;
+  const m = /retry in ([\d.]+)\s*s/i.exec(msg);
+  if (m) retryAfter = parseFloat(m[1]);
+  for (const d of err.details || []) {
+    if (/RetryInfo/.test(d['@type'] || '') && d.retryDelay) retryAfter = parseFloat(d.retryDelay) || retryAfter;
+  }
+  const daily = /per\s?day|daily/i.test(msg + JSON.stringify(err.details || []));
+  return { msg, retryAfter, daily };
 }
 
-function mapStatus(status, msg) {
-  if (status === 429) return new GeminiError('quota', msg || 'Rate limit or free quota reached. Wait a minute and try again.', status);
+async function readError(res) {
+  try { return parseErrorBody(await res.json()); } catch (_) { return { msg: '', retryAfter: 0, daily: false }; }
+}
+
+function mapStatus(status, info) {
+  const { msg, retryAfter, daily } = info;
+  if (status === 429) return new GeminiError('quota', msg || 'Rate limit or free quota reached. Wait a minute and try again.', status, { retryAfter, daily });
   if (status === 401 || status === 403) return new GeminiError('key', msg || 'This key was rejected.', status);
   if (status === 400 && /api key/i.test(msg)) return new GeminiError('key', msg, status);
   if (status === 404) return new GeminiError('model', msg || 'That model was not found for this key.', status);
+  if (status === 400 && /model|not supported|unsupported/i.test(msg)) return new GeminiError('model', msg, status);
   if (status >= 500) return new GeminiError('server', msg || 'Google had a problem. Try again shortly.', status);
   return new GeminiError('request', msg || `Request failed (${status}).`, status);
 }

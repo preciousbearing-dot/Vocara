@@ -72,3 +72,40 @@ export function normalizePcm(pcm, { targetRms = 3000, peak = 31000, maxGain = 4 
   for (let i = 0; i < n; i++) od.setInt16(i * 2, Math.max(-32768, Math.min(32767, Math.round(dv.getInt16(i * 2, true) * gain))), true);
   return out;
 }
+
+// Finds a quiet stretch (a breath between phrases) near `fraction` of the way through a clip.
+// Used to place a [pause] inside one request instead of paying for two.
+// Returns the sample index at the middle of the gap, or -1 when there is no clear one.
+export function findGap(pcm, rate, fraction, { frameMs = 10, minGapMs = 100, windowFrac = 0.2, fromSample = 0 } = {}) {
+  const n = pcm.length >> 1;
+  const frame = Math.max(1, Math.round((frameMs * rate) / 1000));
+  const frames = Math.floor(n / frame);
+  if (frames < 10) return -1;
+  const dv = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength);
+  const rms = new Float64Array(frames);
+  for (let f = 0; f < frames; f++) {
+    let sum = 0;
+    for (let i = f * frame; i < (f + 1) * frame; i++) { const v = dv.getInt16(i * 2, true); sum += v * v; }
+    rms[f] = Math.sqrt(sum / frame);
+  }
+  const sorted = Array.from(rms).sort((a, b) => a - b);
+  const loud = sorted[Math.floor(frames * 0.9)];
+  const thr = Math.max(100, loud * 0.1);
+  const target = fraction * frames;
+  const win = Math.max(50, windowFrac * frames);
+  const minRun = Math.max(1, Math.round(minGapMs / frameMs));
+  const startF = Math.ceil(fromSample / frame);
+  let best = -1; let bestDist = Infinity;
+  let f = 0;
+  while (f < frames) {
+    if (rms[f] >= thr) { f++; continue; }
+    let e = f;
+    while (e < frames && rms[e] < thr) e++;
+    const centre = (f + e) / 2;
+    if (e - f >= minRun && centre > startF && Math.abs(centre - target) <= win && Math.abs(centre - target) < bestDist) {
+      best = centre; bestDist = Math.abs(centre - target);
+    }
+    f = e;
+  }
+  return best < 0 ? -1 : Math.round(best * frame);
+}

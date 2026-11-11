@@ -11,6 +11,8 @@ export async function sha256Hex(str) {
 // `take` is only part of the key when above 0, so take 0 keeps the key it always had.
 export function cacheKey({ model, voice, style, text, take = 0 }) {
   const parts = [model || '', voice || '', (style || '').trim(), text];
+  // Styled clips made before the director's-notes prompt (v2) could contain the style read aloud, so they get a new key.
+  if ((style || '').trim()) parts.push('p2');
   if (take > 0) parts.push(take);
   return sha256Hex(JSON.stringify(parts));
 }

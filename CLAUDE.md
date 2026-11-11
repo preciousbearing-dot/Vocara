@@ -30,6 +30,13 @@ Gemini free quota is per model. `www/js/models.js` rotates to the next TTS model
 ## Style text and saving
 The style goes to Gemini as a `# DIRECTOR'S NOTES` block above a `#### TRANSCRIPT` block (`gemini.js buildPrompt`), because a bare "style: line" made long styles get read aloud. `clip()` also refuses to cache a take that runs far longer than its text (`wav.runsTooLong`), retries once, then errors. "Save all to phone" uses the native `VocaraSave` plugin (MediaStore, Download/Vocara, Android 10+); Share stays as the fallback. Settings lists the models the key can use and lets the person pick one.
 
+## Gemini 3.8 voice models (found 2026-11-11)
+- `gemini-3.8-flash-tts` returns a complete WAV (44-byte RIFF header in front, a ~6 KB `C2PA` provenance chunk after the audio), not bare PCM. Treated as PCM, the header is a click at the start of every clip and the C2PA chunk is a ~125 ms burst of static at the end. `wav.unwrapWav` keeps only the `data` chunk; `gemini.js audioToPcm` always uses it. Never put raw response bytes into a clip.
+- 3.8+ models use `POST /v1beta/interactions` with the style as a `speech_metadata` annotation (`usesInteractions`, `buildInteractionBody`); on 400/404/empty it falls back to `generateContent` (director's notes). Google's guidance: keep style short; long notes cause drift. Quota and key errors never trigger the fallback (it would bill twice).
+- The model sometimes reads a whole scene twice in one clip. `wav.checkTake` flags it (opening 2 s found again later by dynamic time warping, plus ms-per-character); `cutRepeat` keeps the first copy when both halves are about the same length. Repaired takes are marked `repaired` and Studio tells the person to listen. Unrepairable takes are retried once, never cached, then reported.
+- Clips cached by older builds are healed on read (`tidyCached` in services.js): header and static removed, repeats cut, no quota spent. `checked: 2` marks a clip already verified.
+- Calibration data and fixture: `tests/fixtures/clean_scene.wav` (a real clean take); doubled takes ran 105-140 ms per character, clean ones 60-70.
+
 ## Not built yet
 Local MCP server for Claude on the laptop, MP3 export (no encoder bundled; WAV only), true word alignment (word times are estimated), Android Keystore storage for the API key.
 

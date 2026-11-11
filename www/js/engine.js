@@ -1,7 +1,7 @@
 // Turns a script into scenes, scenes into audio, and audio into a timeline.
 // No DOM and no network here: audio comes from the injected getPcm().
 import { parseScript, splitScenes } from './tags.js';
-import { concatBytes, findGap, normalizePcm, pcmDurationMs, silencePcm, trimSilence } from './wav.js';
+import { concatBytes, fadeEdges, findGap, normalizePcm, pcmDurationMs, silencePcm, trimSilence } from './wav.js';
 import { buildCues, wordCues, wordTimings } from './timing.js';
 import { buildSrt } from './srt.js';
 
@@ -69,7 +69,7 @@ export async function renderScene(scene, getPcm) {
       if (pieces) raw = pieces[ti];
       else { const got = await getPcm({ text: part.text, scene }); rate = got.rate; raw = got.pcm; }
       ti++;
-      const pcm = normalizePcm(trimSilence(raw, rate));
+      const pcm = fadeEdges(normalizePcm(trimSilence(raw, rate)), rate);
       const dur = pcmDurationMs(pcm, rate);
       chunks.push(pcm);
       parts.push({ type: 'text', text: part.text, startMs: ms, endMs: ms + dur, words: wordTimings(part.text, ms, dur) });

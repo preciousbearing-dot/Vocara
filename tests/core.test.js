@@ -334,3 +334,121 @@ test('runsTooLong flags a clip that is far longer than the text can take to say'
   assert.equal(runsTooLong(40000, text), true);
   assert.equal(runsTooLong(5000, ''), false);
 });
+
+// ---- newer Gemini models: WAV file with header and trailing provenance data
+import { unwrapWav, checkTake, cutRepeat, fadeEdges } from '../www/js/wav.js';
+import { usesInteractions, buildInteractionBody, findAudio } from '../www/js/gemini.js';
+import { readFileSync } from 'node:fs';
+
+const b64 = (u8) => Buffer.from(u8).toString('base64');
+function sine(n, amp = 8000) { const o = new Uint8Array(n * 2); const dv = new DataView(o.buffer); for (let i = 0; i < n; i++) dv.setInt16(i * 2, Math.round(Math.sin(i / 7) * amp), true); return o; }
+// A WAV the way gemini-3.8-flash-tts sends it: 44-byte header, the audio, then a C2PA chunk of 6065 bytes (+1 pad).
+function geminiWav(pcm) {
+  const wav = pcmToWav(pcm, 24000);
+  const c2pa = new Uint8Array(8 + 6066);
+  c2pa.set([0x43, 0x32, 0x50, 0x41], 0); new DataView(c2pa.buffer).setUint32(4, 6065, true);
+  for (let i = 8; i < c2pa.length; i++) c2pa[i] = (i * 37) & 255;
+  return concatBytes([wav, c2pa]);
+}
+
+test('unwrapWav returns only the audio, without the header click or the trailing C2PA static', () => {
+  const pcm = sine(24000);
+  const un = unwrapWav(geminiWav(pcm));
+  assert.equal(un.wrapped, true);
+  assert.equal(un.rate, 24000);
+  assert.equal(un.pcm.length, pcm.length);
+  assert.deepEqual(Array.from(un.pcm.subarray(0, 40)), Array.from(pcm.subarray(0, 40)));
+});
+
+test('unwrapWav leaves bare PCM alone and copes with a blank data size', () => {
+  const pcm = sine(1000);
+  assert.equal(unwrapWav(pcm).wrapped, false);
+  assert.equal(unwrapWav(pcm).pcm, pcm);
+  const streamed = pcmToWav(pcm, 24000);
+  new DataView(streamed.buffer).setUint32(40, 0xffffffff, true);
+  assert.equal(unwrapWav(streamed).pcm.length, pcm.length);
+});
+
+test('synth strips the WAV wrapper of a newer model (the static bug)', async () => {
+  const pcm = sine(24000);
+  const f = async () => ({ ok: true, json: async () => ({ steps: [{ type: 'model_output', content: [{ type: 'audio', mime_type: 'audio/wav', data: b64(geminiWav(pcm)) }] }] }) });
+  const out = await synth({ key: 'K', model: 'gemini-3.8-flash-tts', voice: 'Leda', text: 'Hi', fetchImpl: f });
+  assert.equal(out.pcm.length, pcm.length);
+  assert.equal(out.rate, 24000);
+});
+
+test('3.8 models use the interactions request with the style as speech_metadata', async () => {
+  assert.equal(usesInteractions('gemini-3.8-flash-tts'), true);
+  assert.equal(usesInteractions('gemini-3.1-flash-tts-preview'), false);
+  assert.equal(usesInteractions('gemini-2.5-flash-preview-tts'), false);
+  const body = buildInteractionBody({ model: 'gemini-3.8-flash-tts', voice: 'Leda', text: 'Hello.', style: 'warm' });
+  assert.deepEqual(body.input[0].content[0], { type: 'text', text: 'Hello.', annotations: [{ type: 'speech_metadata', style: 'warm' }] });
+  assert.deepEqual(body.generation_config.speech_config, [{ voice: 'Leda' }]);
+  assert.equal(body.response_format.type, 'audio');
+  assert.equal('annotations' in buildInteractionBody({ model: 'm', voice: 'V', text: 'x' }).input[0].content[0], false);
+  const urls = []; let n = 0;
+  const f = async (url, init) => { urls.push(url); n++; assert.equal(init.headers['x-goog-api-key'], 'K'); assert.ok(!url.includes('K')); return { ok: true, json: async () => ({ steps: [{ content: [{ type: 'audio', data: b64(sine(2000)) }] }] }) }; };
+  await synth({ key: 'K', model: 'gemini-3.8-flash-tts', voice: 'Leda', text: 'Hi', style: 'warm', fetchImpl: f });
+  assert.ok(urls[0].endsWith('/interactions'));
+  assert.equal(n, 1);
+});
+
+test('if Google rejects the new request shape, the older request is tried', async () => {
+  const urls = [];
+  const f = async (url) => {
+    urls.push(url);
+    if (url.endsWith('/interactions')) return { ok: false, status: 400, json: async () => ({ error: { message: 'bad request' } }) };
+    return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/L16;rate=24000', data: b64(sine(2000)) } }] } }] }) };
+  };
+  const out = await synth({ key: 'K', model: 'gemini-3.8-flash-tts', voice: 'Leda', text: 'Hi', fetchImpl: f });
+  assert.equal(urls.length, 2);
+  assert.ok(urls[1].includes(':generateContent'));
+  assert.equal(out.pcm.length, 4000);
+  // a quota error must not trigger a second (billed) request
+  urls.length = 0;
+  const q = async (url) => { urls.push(url); return { ok: false, status: 429, json: async () => ({ error: { message: 'quota' } }) }; };
+  await assert.rejects(synth({ key: 'K', model: 'gemini-3.8-flash-tts', voice: 'Leda', text: 'Hi', fetchImpl: q }), (e) => e.kind === 'quota');
+  assert.equal(urls.length, 1);
+});
+
+test('findAudio reads both response shapes', () => {
+  assert.equal(findAudio({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/L16;rate=24000', data: 'A'.repeat(200) } }] } }] }).mime, 'audio/L16;rate=24000');
+  assert.equal(findAudio({ steps: [{ content: [{ type: 'audio', data: 'B'.repeat(200) }] }] }).data.length, 200);
+  assert.equal(findAudio({ steps: [] }), null);
+});
+
+// ---- takes that say the script twice
+const CLEAN = (() => { const { pcm, rate } = wavToPcm(new Uint8Array(readFileSync(new URL('./fixtures/clean_scene.wav', import.meta.url)))); return { pcm, rate }; })();
+const CLEAN_TEXT = "The survivors in this world belong to a group. Because the moment you join one, you can teach, trade, and be taught. That's how humans always won. Not alone. Together.";
+function stretch(pcm, f) { // crude speed change, so the second copy is not sample-identical
+  const n = pcm.length >> 1; const m = Math.floor(n / f); const o = new Uint8Array(m * 2);
+  const a = new DataView(pcm.buffer, pcm.byteOffset, pcm.byteLength); const b = new DataView(o.buffer);
+  for (let i = 0; i < m; i++) { const p = i * f; const k = Math.floor(p); const t = p - k; const x = a.getInt16(k * 2, true); const y = a.getInt16(Math.min(k + 1, n - 1) * 2, true); b.setInt16(i * 2, Math.round(x + (y - x) * t), true); }
+  return o;
+}
+
+test('checkTake passes a normal take and flags one that says everything twice', () => {
+  assert.equal(checkTake(CLEAN.pcm, CLEAN.rate, CLEAN_TEXT).ok, true);
+  const twice = concatBytes([CLEAN.pcm, silencePcm(900, CLEAN.rate), stretch(CLEAN.pcm, 1.04)]);
+  const v = checkTake(twice, CLEAN.rate, CLEAN_TEXT);
+  assert.equal(v.ok, false);
+  assert.equal(v.repeat, true);
+  assert.ok(v.repeatAt > 10 && v.repeatAt < 13, `repeat found at ${v.repeatAt}`);
+  const cut = cutRepeat(twice, CLEAN.rate, v.repeatAt);
+  assert.ok(cut, 'the cut should be found');
+  const secs = cut.length / 2 / CLEAN.rate;
+  assert.ok(Math.abs(secs - CLEAN.pcm.length / 2 / CLEAN.rate) < 1.2, `kept ${secs}s`);
+  assert.equal(checkTake(cut, CLEAN.rate, CLEAN_TEXT).ok, true);
+});
+
+test('checkTake leaves short lines and steady tones alone', () => {
+  assert.equal(checkTake(sine(24000 * 8), 24000, 'Short line.').ok, true);
+  assert.equal(checkTake(sine(24000 * 12), 24000, 'x'.repeat(170)).ok, true);
+});
+
+test('fadeEdges softens both ends and keeps the length', () => {
+  const p = fadeEdges(sine(2400, 20000), 24000);
+  assert.equal(p.length, 4800);
+  const dv = new DataView(p.buffer);
+  assert.ok(Math.abs(dv.getInt16(0, true)) < 200 && Math.abs(dv.getInt16(4798, true)) < 20000);
+});

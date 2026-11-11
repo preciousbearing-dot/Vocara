@@ -1,6 +1,8 @@
 // Gemini text-to-speech client. Pure functions plus an injectable fetch so the
 // whole module can be tested without a network.
 
+import { unwrapWav } from './wav.js';
+
 export const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 // Third-party coverage (2026) says only this model has a free tier; the user can
 // change the model id in Settings, and "Test key" shows what the key can reach.
@@ -78,30 +80,87 @@ function mapStatus(status, info) {
   return new GeminiError('request', msg || `Request failed (${status}).`, status);
 }
 
-// Returns { pcm: Uint8Array (16-bit mono little-endian), rate }.
-export async function synth({ key, model = DEFAULT_MODEL, voice, text, style, fetchImpl, signal }) {
-  const f = fetchImpl || fetch;
+// Models from 3.8 on use Google's newer request shape (POST /interactions, the style sent as a
+// separate speech_metadata note instead of text mixed into the transcript).
+export function usesInteractions(model) {
+  const m = /(\d+(?:\.\d+)?)/.exec(String(model || ''));
+  return /tts/i.test(model || '') && Boolean(m) && parseFloat(m[1]) >= 3.8;
+}
+
+export function buildInteractionBody({ model, voice, text, style }) {
+  const s = (style || '').trim();
+  const item = { type: 'text', text };
+  if (s) item.annotations = [{ type: 'speech_metadata', style: s }];
+  return {
+    model,
+    input: [{ type: 'user_input', content: [item] }],
+    response_format: { type: 'audio' },
+    generation_config: { speech_config: [{ voice }] },
+  };
+}
+
+// Finds the audio in either response shape (generateContent or interactions): the last object
+// that carries base64 `data` and says it is audio.
+export function findAudio(json) {
+  let found = null;
+  const walk = (n) => {
+    if (Array.isArray(n)) { n.forEach(walk); return; }
+    if (!n || typeof n !== 'object') return;
+    const mime = String(n.mime_type || n.mimeType || '');
+    if (typeof n.data === 'string' && n.data.length > 0 && (n.type === 'audio' || /audio/i.test(mime))) {
+      found = { data: n.data, mime, rate: Number(n.sample_rate) || 0 };
+    }
+    for (const k of Object.keys(n)) if (n[k] && typeof n[k] === 'object') walk(n[k]);
+  };
+  walk(json);
+  return found;
+}
+
+// Turns whatever came back into clean 16-bit mono samples (no WAV header, no trailing metadata).
+export function audioToPcm(found) {
+  const raw = base64ToBytes(found.data);
+  const un = unwrapWav(raw);
+  const rate = un.rate || found.rate || sampleRateFromMime(found.mime);
+  return { pcm: un.pcm, rate };
+}
+
+async function post(f, url, key, body, signal) {
   let res;
   try {
-    res = await f(`${API_BASE}/models/${encodeURIComponent(model)}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify(buildSynthBody({ model, voice, text, style })),
-      signal,
-    });
+    res = await f(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal });
   } catch (e) {
     if (e && e.name === 'AbortError') throw e;
     throw new GeminiError('network', 'Could not reach Google. Check your connection.');
   }
   if (!res.ok) throw mapStatus(res.status, await readError(res));
-  const json = await res.json();
-  const part = json && json.candidates && json.candidates[0] && json.candidates[0].content
-    && json.candidates[0].content.parts && json.candidates[0].content.parts[0];
-  const inline = part && part.inlineData;
-  if (!inline || !inline.data) {
-    throw new GeminiError('empty', 'Google returned no audio for that text. Try shorter or simpler wording.');
+  return res.json();
+}
+
+async function synthLegacy({ key, model, voice, text, style, fetchImpl, signal }) {
+  const json = await post(fetchImpl || fetch, `${API_BASE}/models/${encodeURIComponent(model)}:generateContent`, key, buildSynthBody({ model, voice, text, style }), signal);
+  const found = findAudio(json);
+  if (!found) throw new GeminiError('empty', 'Google returned no audio for that text. Try shorter or simpler wording.');
+  return audioToPcm(found);
+}
+
+async function synthInteractions({ key, model, voice, text, style, fetchImpl, signal }) {
+  const json = await post(fetchImpl || fetch, `${API_BASE}/interactions`, key, buildInteractionBody({ model, voice, text, style }), signal);
+  const found = findAudio(json);
+  if (!found) throw new GeminiError('empty', 'Google returned no audio for that text. Try shorter or simpler wording.');
+  return audioToPcm(found);
+}
+
+// Returns { pcm: Uint8Array (16-bit mono little-endian), rate }.
+export async function synth(opts) {
+  const o = { model: DEFAULT_MODEL, ...opts };
+  if (!usesInteractions(o.model)) return synthLegacy(o);
+  try {
+    return await synthInteractions(o);
+  } catch (e) {
+    // If Google does not accept the newer request for this key, the older one still works.
+    if (e instanceof GeminiError && (e.kind === 'request' || e.kind === 'model' || e.kind === 'empty')) return synthLegacy(o);
+    throw e;
   }
-  return { pcm: base64ToBytes(inline.data), rate: sampleRateFromMime(inline.mimeType) };
 }
 
 // Cheap key check: lists models. Does not spend speech quota.

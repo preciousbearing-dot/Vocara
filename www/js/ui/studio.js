@@ -18,6 +18,7 @@ export function renderStudio(root, { go }, id) {
   let result = null; // { timeline, files }
   let busy = null; // AbortController while generating
   const usedModels = new Set();
+  const repairedScenes = new Set();
   let statusToken = 0;
   let saveTimer = null;
   let rebuildTimer = null;
@@ -134,6 +135,7 @@ export function renderStudio(root, { go }, id) {
     return ({ text }) => withRetry(async () => {
       const got = await clipPcm({ ...params(scene), text });
       if (got.model) usedModels.add(got.model);
+      if (got.repaired) repairedScenes.add(scene.index + 1);
       if (!got.cached) { updateQuota(); await sleep(PACE_MS, signal); }
       return got;
     }, { signal, onWait });
@@ -150,7 +152,7 @@ export function renderStudio(root, { go }, id) {
     const stopBtn = h('button', { class: 'btn ghost block', text: 'Stop', onclick: () => ctl.abort() });
     try {
       const rendered = [];
-      usedModels.clear();
+      usedModels.clear(); repairedScenes.clear();
       for (const scene of scenes) {
         const note = h('div', { class: 'notice', text: `Scene ${scene.index + 1} of ${scenes.length}…` });
         progress.replaceChildren(note, stopBtn);
@@ -161,7 +163,9 @@ export function renderStudio(root, { go }, id) {
       result = { timeline };
       progress.replaceChildren();
       const backups = [...usedModels].filter((m) => m && m !== store.get().model);
-      if (backups.length) progress.replaceChildren(h('div', { class: 'notice', text: `Some scenes used a backup voice model (${backups.join(', ')}) because ${store.get().model} hit its limit. If a scene sounds different, tap New take on it later.` }));
+      const fixed = [...repairedScenes].sort((a, b) => a - b);
+      if (fixed.length) progress.append(h('div', { class: 'notice', text: `Scene${fixed.length === 1 ? '' : 's'} ${fixed.join(', ')} said the script twice, so Vocara kept the first read. Give ${fixed.length === 1 ? 'it' : 'them'} a quick listen.` }));
+      if (backups.length) progress.append(h('div', { class: 'notice', text: `Some scenes used a backup voice model (${backups.join(', ')}) because ${store.get().model} hit its limit. If a scene sounds different, tap New take on it later.` }));
       paintResult();
     } catch (e) {
       if (e && e.name === 'AbortError') say(progress, 'Stopped. Finished scenes are saved, so you can continue later at no extra cost.');

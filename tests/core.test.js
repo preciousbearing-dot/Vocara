@@ -53,7 +53,10 @@ test('srt time and cues format correctly', () => {
 });
 
 test('prompt and request body follow the documented shape', () => {
-  assert.equal(buildPrompt('Say calmly.', 'Hello'), 'Say calmly: Hello');
+  const bp = buildPrompt('Say calmly.', 'Hello');
+  assert.ok(bp.startsWith("# DIRECTOR'S NOTES"));
+  assert.ok(bp.includes('Say calmly.'));
+  assert.ok(bp.endsWith('#### TRANSCRIPT\nHello'));
   assert.equal(buildPrompt('', 'Hello'), 'Hello');
   const b = buildSynthBody({ model: 'm', voice: 'Kore', text: 'Hi', style: '' });
   assert.deepEqual(b.generationConfig.responseModalities, ['AUDIO']);
@@ -177,7 +180,7 @@ test('update: only newer builds count as available', async () => {
   assert.equal((await checkForUpdate({ currentBuild: 0, fetchImpl: async () => { throw new Error('offline'); } })).state, 'error');
 });
 
-import { trimSilence, normalizePcm } from '../www/js/wav.js';
+import { trimSilence, normalizePcm, runsTooLong } from '../www/js/wav.js';
 import { wordTimings, buildCues, tokenizeWords } from '../www/js/timing.js';
 import { planScenes, renderScene, assemble, outputsFor, requestsFor, claudeBundle } from '../www/js/engine.js';
 import { withRetry } from '../www/js/queue.js';
@@ -322,4 +325,12 @@ test('queue: waits as long as Google asked, and does not retry a daily limit', a
   let calls = 0;
   await assert.rejects(withRetry(async () => { calls++; throw new GeminiError('quota', 'day', 429, { daily: true }); }, { waits: [1, 2], sleepImpl: async () => {} }), /day/);
   assert.equal(calls, 1);
+});
+
+test('runsTooLong flags a clip that is far longer than the text can take to say', () => {
+  const text = 'a'.repeat(140); // about 9 s of speech
+  assert.equal(runsTooLong(9000, text), false);
+  assert.equal(runsTooLong(22000, text), false);
+  assert.equal(runsTooLong(40000, text), true);
+  assert.equal(runsTooLong(5000, ''), false);
 });

@@ -6,7 +6,7 @@ import { planScenes, renderScene, assemble, outputsFor, claudeBundle, requestsFo
 import { withRetry, sleep } from '../queue.js';
 import { pcmToWav } from '../wav.js';
 import { playWav, stopAudio } from '../audio.js';
-import { deliver, copyText } from './native.js';
+import { deliver, copyText, saveToPhone } from './native.js';
 
 const PACE_MS = 400; // breathing room between paid requests
 
@@ -227,6 +227,13 @@ export function renderStudio(root, { go }, id) {
     } catch (e) { toast(e && e.name === 'AbortError' ? 'Cancelled.' : `Could not export: ${e.message || e}`); }
   }
 
+  async function saveAll(list, label) {
+    try {
+      const how = await saveToPhone(list);
+      toast(how === 'saved' ? `${label} saved to Downloads/Vocara on your phone.` : how === 'shared' ? `${label} ready to save or send.` : `${label} downloaded.`);
+    } catch (e) { toast(`Could not save: ${e.message || e}. Try Share instead.`); }
+  }
+
   function paintResult() {
     if (!result) { resultBox.replaceChildren(); return; }
     const f = files();
@@ -242,9 +249,10 @@ export function renderStudio(root, { go }, id) {
       h('div', { class: 'row' }, h('h2', { class: 'grow', text: 'Voiceover ready' }), h('span', { class: 'chip ok', text: `${secs}s` })),
       h('p', { class: 'sub', text: `${result.timeline.scenes.length} scene${result.timeline.scenes.length === 1 ? '' : 's'}. Word times are estimated from the audio; scene and pause times are exact.` }),
       playAll,
+      h('button', { class: 'btn block', id: 'save-phone', onclick: () => saveAll(f.all, 'Files') }, ' Save all to phone'),
       h('button', { class: 'btn ghost block', id: 'share-all', onclick: () => send(f.all, 'Files') }, icon('share', 18), ' Share all files'),
       h('div', { class: 'grid2' },
-        h('button', { class: 'btn ghost small', text: 'Audio WAV', onclick: () => send([f.all[0]], 'Audio') }),
+        h('button', { class: 'btn ghost small', text: 'Save audio WAV', onclick: () => saveAll([f.all[0]], 'Audio') }),
         h('button', { class: 'btn ghost small', text: 'Captions', onclick: () => send([f.all[1]], 'Captions') }),
         h('button', { class: 'btn ghost small', text: 'Word captions', onclick: () => send([f.all[2]], 'Word captions') }),
         h('button', { class: 'btn ghost small', text: 'Timings', onclick: () => send([f.all[3]], 'Timings') })),

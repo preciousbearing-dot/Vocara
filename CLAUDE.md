@@ -27,6 +27,9 @@ Never send the person to a browser to download. The native plugin `VocaraUpdate`
 ## Quota and speed
 Gemini free quota is per model. `www/js/models.js` rotates to the next TTS model when one hits its limit (the user's chosen model first, others discovered from the key). Clips are cached under the model the user chose, whatever model made them. A scene with `[pause]` tags is ONE request: `engine.splitAtGaps` places the pauses at the natural breaths (`wav.findGap`) and falls back to one request per piece only when no clean breath exists. Retry waits follow Google's retry delay.
 
+## Style text and saving
+The style goes to Gemini as a `# DIRECTOR'S NOTES` block above a `#### TRANSCRIPT` block (`gemini.js buildPrompt`), because a bare "style: line" made long styles get read aloud. `clip()` also refuses to cache a take that runs far longer than its text (`wav.runsTooLong`), retries once, then errors. "Save all to phone" uses the native `VocaraSave` plugin (MediaStore, Download/Vocara, Android 10+); Share stays as the fallback. Settings lists the models the key can use and lets the person pick one.
+
 ## Not built yet
 Local MCP server for Claude on the laptop, MP3 export (no encoder bundled; WAV only), true word alignment (word times are estimated), Android Keystore storage for the API key.
 

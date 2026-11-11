@@ -35,6 +35,24 @@ export async function deliver(files, title = 'Vocara export') {
   return 'downloaded';
 }
 
+// Saves files straight into the phone's Downloads/Vocara folder (visible in the Files app).
+// Returns 'saved' on the phone, or 'downloaded' in a browser.
+export async function saveToPhone(files) {
+  const plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+  if (isNative() && plugins.Filesystem) {
+    let save = null;
+    try { save = window.Capacitor.registerPlugin ? window.Capacitor.registerPlugin('VocaraSave') : plugins.VocaraSave; } catch (_) { save = plugins.VocaraSave || null; }
+    if (save) {
+      for (const f of files) {
+        const r = await plugins.Filesystem.writeFile({ path: `vocara/${f.name}`, data: toBase64(bytesOf(f.data)), directory: 'CACHE', recursive: true });
+        await save.saveToDownloads({ path: r.uri, name: f.name, mime: f.mime });
+      }
+      return 'saved';
+    }
+  }
+  return deliver(files, 'Vocara export');
+}
+
 export async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch (_) { return false; }
 }

@@ -97,7 +97,8 @@ try:
         page.click('#generate')
         page.wait_for_selector('#result', timeout=30000)
         check('2 Gemini requests made', calls['speech'] == 2)
-        check('style prefix reached the model', all(t.startswith('Say in a calm, deep documentary') for t in calls['texts']))
+        check('style reached the model as director notes', all(t.startswith("# DIRECTOR'S NOTES") and 'Say in a calm, deep documentary' in t for t in calls['texts']))
+        check('spoken line sits under TRANSCRIPT', all('#### TRANSCRIPT\n' in t for t in calls['texts']))
         check('pause tag was not sent to the model', not any('pause' in t for t in calls['texts']))
         check('scene with a pause went out as one request', any(t.endswith('Scene two continues here.') for t in calls['texts']))
         result_text = page.inner_text('#result')
@@ -212,6 +213,14 @@ try:
         nat = pg.evaluate('window.__native')
         check('native: 4 files written to cache dir', len(nat['writes']) == 4 and all(w['dir'] == 'CACHE' for w in nat['writes']))
         check('native: share sheet opened with 4 files', len(nat['shares'][0]['files']) == 4)
+        pg.evaluate("window.Capacitor.registerPlugin = (n) => ({saveToDownloads: async (o) => { (window.__saved = window.__saved || []).push(o); return {}; }})")
+        pg.evaluate("window.__native.writes = []")
+        pg.click('#save-phone')
+        for _ in range(50):
+            if (pg.evaluate('(window.__saved || []).length') or 0) == 4: break
+            pg.wait_for_timeout(100)
+        saved = pg.evaluate('window.__saved || []')
+        check('native: Save all to phone saved 4 files to Downloads', len(saved) == 4 and any(o['name'].endswith('.wav') and o['mime'] == 'audio/wav' for o in saved))
         browser.close()
 finally:
     server.terminate()

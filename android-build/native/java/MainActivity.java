@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(VocaraUpdatePlugin.class);
+        registerPlugin(VocaraSavePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

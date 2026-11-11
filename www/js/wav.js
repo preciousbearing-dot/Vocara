@@ -109,3 +109,10 @@ export function findGap(pcm, rate, fraction, { frameMs = 10, minGapMs = 100, win
   }
   return best < 0 ? -1 : Math.round(best * frame);
 }
+
+// True when a clip is far longer than the text could take to say, which is what happens when the
+// voice also reads the style notes aloud. 7 characters per second is slower than any real narration.
+export function runsTooLong(durationMs, text) {
+  const chars = String(text || '').length;
+  return chars > 0 && durationMs > (chars / 7) * 1000 + 3000;
+}

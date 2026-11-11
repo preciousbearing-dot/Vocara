@@ -17,11 +17,13 @@ export class GeminiError extends Error {
   }
 }
 
-// A style phrase such as "Say calmly and slowly" goes in front of the line,
-// which is how Google's own examples steer delivery.
+// The style goes in a clearly separate "director's notes" block, and the line to be spoken
+// sits under a TRANSCRIPT heading, which is the layout Google documents for steering Gemini
+// speech. A bare "style: line" lets long style text get read aloud on some takes.
 export function buildPrompt(style, text) {
-  const s = (style || '').trim().replace(/[:.]+$/, '');
-  return s ? `${s}: ${text}` : text;
+  const s = (style || '').trim();
+  if (!s) return text;
+  return `# DIRECTOR'S NOTES\nDelivery guidance only. Never read these notes aloud.\n${s}\n\n#### TRANSCRIPT\n${text}`;
 }
 
 export function buildSynthBody({ model, voice, text, style }) {

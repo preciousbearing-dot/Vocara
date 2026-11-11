@@ -3,7 +3,8 @@ import { createStore } from './store.js';
 import { createCache, idbAdapter, memoryAdapter } from './cache.js';
 import { synth, testKey } from './gemini.js';
 import { modelOrder, createRest, synthRotating } from './models.js';
-import { pcmToWav, pcmDurationMs, wavToPcm } from './wav.js';
+import { pcmToWav, pcmDurationMs, wavToPcm, runsTooLong } from './wav.js';
+import { GeminiError } from './gemini.js';
 import { PREVIEW_LINE } from './voices.js';
 import { createUsage } from './usage.js';
 import { createProjects } from './projects.js';
@@ -47,11 +48,17 @@ export async function clip({ voice, text, style = '', model, take = 0 }) {
   const params = { model: wanted, voice, style, text, take };
   return cache.getOrMake(params, async () => {
     const order = modelOrder(wanted, await discoverModels());
-    const { pcm, rate, model: used } = await synthRotating({
-      order, rest, synthOne: (m) => synth({ key: store.getKey(), voice, text, style, model: m }),
-    });
-    usage.bump();
-    return { wav: pcmToWav(pcm, rate), rate, ms: pcmDurationMs(pcm, rate), model: used };
+    // A take where the voice also reads the style notes aloud is never saved. Try once more,
+    // then stop with a clear message instead of handing back bad audio.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { pcm, rate, model: used } = await synthRotating({
+        order, rest, synthOne: (m) => synth({ key: store.getKey(), voice, text, style, model: m }),
+      });
+      usage.bump();
+      const ms = pcmDurationMs(pcm, rate);
+      if (!style || !runsTooLong(ms, text)) return { wav: pcmToWav(pcm, rate), rate, ms, model: used };
+    }
+    throw new GeminiError('request', 'The voice read the style notes out loud. Shorten the Mood and style text and try again.');
   });
 }
 

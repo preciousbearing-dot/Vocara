@@ -1,5 +1,5 @@
 import { h, icon, toast } from '../dom.js';
-import { store, cache, hasKey, VERSION, usage } from '../services.js';
+import { store, cache, hasKey, VERSION, usage, discoverModels } from '../services.js';
 import { maskKey } from '../store.js';
 import { buildInfo, runCheck, openSheet } from '../updater.js';
 import { applyTheme } from '../theme.js';
@@ -40,6 +40,26 @@ export function renderSettings(root, { go, rerender }) {
     modelInput.value = v;
     toast('Model saved.');
   };
+
+  const modelList = h('div', { class: 'stack mt8', 'aria-live': 'polite' });
+  const paintModels = (names) => {
+    const cur = store.get().model;
+    modelList.replaceChildren(...(names.length
+      ? names.map((n) => h('button', {
+        class: `chip ${n === cur ? 'ok' : 'plain'} model-opt`, 'data-model': n, 'aria-pressed': String(n === cur),
+        text: n === cur ? `${n} (selected)` : n,
+        onclick: () => { store.set({ model: n }); modelInput.value = n; toast('Model selected.'); paintModels(names); },
+      }))
+      : [h('div', { class: 'notice', text: 'No voice models were found for this key.' })]));
+  };
+  const showModels = h('button', { class: 'chip plain', id: 'show-models', text: 'Show models my key can use' });
+  showModels.addEventListener('click', async () => {
+    if (!hasKey()) { toast('Add your Gemini key first.'); return; }
+    showModels.disabled = true; showModels.textContent = 'Checking...';
+    const names = await discoverModels(true);
+    showModels.disabled = false; showModels.textContent = 'Show models my key can use';
+    paintModels(names);
+  });
 
   const cacheLine = h('div', { class: 'd', text: 'Counting saved clips...' });
   const refreshCache = async () => {
@@ -95,7 +115,8 @@ export function renderSettings(root, { go, rerender }) {
       modelInput,
       h('div', { class: 'row' },
         h('button', { class: 'btn small', text: 'Save', onclick: saveModel }),
-        h('button', { class: 'chip plain', text: 'Reset', onclick: () => { modelInput.value = DEFAULT_MODEL; saveModel(); } }))),
+        h('button', { class: 'chip plain', text: 'Reset', onclick: () => { modelInput.value = DEFAULT_MODEL; saveModel(); } })),
+      h('div', {}, showModels), modelList),
 
     h('div', { class: 'label mt24', text: 'Quota guard' }),
     h('div', { class: 'card mt8 stack' },

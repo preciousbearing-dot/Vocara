@@ -1,0 +1,1185 @@
+{
+  "project": "Stone age",
+  "voice": "Leda",
+  "style": "Speak as a Confident storyteller..Fast, bright documentary narrator. Confident, warm and a little amused, like someone who loves the story they are telling. Brisk pace, about 160 words per minute, with no long pauses. Lift the pitch slightly on surprising facts and slow down for one beat just before a reveal.",
+  "model": "gemini-3.8-flash-tts",
+  "sampleRate": 24000,
+  "durationMs": 83158,
+  "wordTimings": "estimated",
+  "scenes": [
+    {
+      "index": 0,
+      "text": "You wake up in the Stone Age. Your memory is perfect. You know electricity, medicine, even how a phone works. [pause 0.5s] Surely, you'd survive. Right?",
+      "startMs": 0,
+      "endMs": 9731,
+      "words": [
+        {
+          "w": "You",
+          "startMs": 0,
+          "endMs": 219
+        },
+        {
+          "w": "wake",
+          "startMs": 219,
+          "endMs": 510
+        },
+        {
+          "w": "up",
+          "startMs": 510,
+          "endMs": 656
+        },
+        {
+          "w": "in",
+          "startMs": 656,
+          "endMs": 802
+        },
+        {
+          "w": "the",
+          "startMs": 802,
+          "endMs": 1020
+        },
+        {
+          "w": "Stone",
+          "startMs": 1020,
+          "endMs": 1385
+        },
+        {
+          "w": "Age.",
+          "startMs": 1385,
+          "endMs": 1895
+        },
+        {
+          "w": "Your",
+          "startMs": 1895,
+          "endMs": 2187
+        },
+        {
+          "w": "memory",
+          "startMs": 2187,
+          "endMs": 2624
+        },
+        {
+          "w": "is",
+          "startMs": 2624,
+          "endMs": 2770
+        },
+        {
+          "w": "perfect.",
+          "startMs": 2770,
+          "endMs": 3572
+        },
+        {
+          "w": "You",
+          "startMs": 3572,
+          "endMs": 3790
+        },
+        {
+          "w": "know",
+          "startMs": 3790,
+          "endMs": 4082
+        },
+        {
+          "w": "electricity,",
+          "startMs": 4082,
+          "endMs": 5029
+        },
+        {
+          "w": "medicine,",
+          "startMs": 5029,
+          "endMs": 5758
+        },
+        {
+          "w": "even",
+          "startMs": 5758,
+          "endMs": 6050
+        },
+        {
+          "w": "how",
+          "startMs": 6050,
+          "endMs": 6269
+        },
+        {
+          "w": "a",
+          "startMs": 6269,
+          "endMs": 6342
+        },
+        {
+          "w": "phone",
+          "startMs": 6342,
+          "endMs": 6706
+        },
+        {
+          "w": "works.",
+          "startMs": 6706,
+          "endMs": 7362
+        },
+        {
+          "w": "Surely,",
+          "startMs": 7862,
+          "endMs": 8329
+        },
+        {
+          "w": "you'd",
+          "startMs": 8329,
+          "endMs": 8563
+        },
+        {
+          "w": "survive.",
+          "startMs": 8563,
+          "endMs": 9205
+        },
+        {
+          "w": "Right?",
+          "startMs": 9205,
+          "endMs": 9731
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "Here's the problem. The people around you are not primitive. Their brains are just like yours. [pause 0.4s] And they've spent their whole lives learning the one thing you never did: how to live here.",
+      "startMs": 10131,
+      "endMs": 20817,
+      "words": [
+        {
+          "w": "Here's",
+          "startMs": 10131,
+          "endMs": 10445
+        },
+        {
+          "w": "the",
+          "startMs": 10445,
+          "endMs": 10634
+        },
+        {
+          "w": "problem.",
+          "startMs": 10634,
+          "endMs": 11325
+        },
+        {
+          "w": "The",
+          "startMs": 11325,
+          "endMs": 11513
+        },
+        {
+          "w": "people",
+          "startMs": 11513,
+          "endMs": 11890
+        },
+        {
+          "w": "around",
+          "startMs": 11890,
+          "endMs": 12268
+        },
+        {
+          "w": "you",
+          "startMs": 12268,
+          "endMs": 12456
+        },
+        {
+          "w": "are",
+          "startMs": 12456,
+          "endMs": 12645
+        },
+        {
+          "w": "not",
+          "startMs": 12645,
+          "endMs": 12833
+        },
+        {
+          "w": "primitive.",
+          "startMs": 12833,
+          "endMs": 13650
+        },
+        {
+          "w": "Their",
+          "startMs": 13650,
+          "endMs": 13964
+        },
+        {
+          "w": "brains",
+          "startMs": 13964,
+          "endMs": 14341
+        },
+        {
+          "w": "are",
+          "startMs": 14341,
+          "endMs": 14530
+        },
+        {
+          "w": "just",
+          "startMs": 14530,
+          "endMs": 14781
+        },
+        {
+          "w": "like",
+          "startMs": 14781,
+          "endMs": 15032
+        },
+        {
+          "w": "yours.",
+          "startMs": 15032,
+          "endMs": 15598
+        },
+        {
+          "w": "And",
+          "startMs": 15998,
+          "endMs": 16183
+        },
+        {
+          "w": "they've",
+          "startMs": 16183,
+          "endMs": 16554
+        },
+        {
+          "w": "spent",
+          "startMs": 16554,
+          "endMs": 16863
+        },
+        {
+          "w": "their",
+          "startMs": 16863,
+          "endMs": 17172
+        },
+        {
+          "w": "whole",
+          "startMs": 17172,
+          "endMs": 17481
+        },
+        {
+          "w": "lives",
+          "startMs": 17481,
+          "endMs": 17790
+        },
+        {
+          "w": "learning",
+          "startMs": 17790,
+          "endMs": 18284
+        },
+        {
+          "w": "the",
+          "startMs": 18284,
+          "endMs": 18469
+        },
+        {
+          "w": "one",
+          "startMs": 18469,
+          "endMs": 18655
+        },
+        {
+          "w": "thing",
+          "startMs": 18655,
+          "endMs": 18964
+        },
+        {
+          "w": "you",
+          "startMs": 18964,
+          "endMs": 19149
+        },
+        {
+          "w": "never",
+          "startMs": 19149,
+          "endMs": 19458
+        },
+        {
+          "w": "did:",
+          "startMs": 19458,
+          "endMs": 19767
+        },
+        {
+          "w": "how",
+          "startMs": 19767,
+          "endMs": 19952
+        },
+        {
+          "w": "to",
+          "startMs": 19952,
+          "endMs": 20076
+        },
+        {
+          "w": "live",
+          "startMs": 20076,
+          "endMs": 20323
+        },
+        {
+          "w": "here.",
+          "startMs": 20323,
+          "endMs": 20817
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "Day one. You're thirsty, but that river is full of parasites you can't see. You know germs exist. You just can't filter water, or boil it without a pot.",
+      "startMs": 21217,
+      "endMs": 31694,
+      "words": [
+        {
+          "w": "Day",
+          "startMs": 21217,
+          "endMs": 21450
+        },
+        {
+          "w": "one.",
+          "startMs": 21450,
+          "endMs": 21993
+        },
+        {
+          "w": "You're",
+          "startMs": 21993,
+          "endMs": 22381
+        },
+        {
+          "w": "thirsty,",
+          "startMs": 22381,
+          "endMs": 23080
+        },
+        {
+          "w": "but",
+          "startMs": 23080,
+          "endMs": 23312
+        },
+        {
+          "w": "that",
+          "startMs": 23312,
+          "endMs": 23623
+        },
+        {
+          "w": "river",
+          "startMs": 23623,
+          "endMs": 24011
+        },
+        {
+          "w": "is",
+          "startMs": 24011,
+          "endMs": 24166
+        },
+        {
+          "w": "full",
+          "startMs": 24166,
+          "endMs": 24477
+        },
+        {
+          "w": "of",
+          "startMs": 24477,
+          "endMs": 24632
+        },
+        {
+          "w": "parasites",
+          "startMs": 24632,
+          "endMs": 25330
+        },
+        {
+          "w": "you",
+          "startMs": 25330,
+          "endMs": 25563
+        },
+        {
+          "w": "can't",
+          "startMs": 25563,
+          "endMs": 25873
+        },
+        {
+          "w": "see.",
+          "startMs": 25873,
+          "endMs": 26417
+        },
+        {
+          "w": "You",
+          "startMs": 26417,
+          "endMs": 26650
+        },
+        {
+          "w": "know",
+          "startMs": 26650,
+          "endMs": 26960
+        },
+        {
+          "w": "germs",
+          "startMs": 26960,
+          "endMs": 27348
+        },
+        {
+          "w": "exist.",
+          "startMs": 27348,
+          "endMs": 28046
+        },
+        {
+          "w": "You",
+          "startMs": 28046,
+          "endMs": 28279
+        },
+        {
+          "w": "just",
+          "startMs": 28279,
+          "endMs": 28590
+        },
+        {
+          "w": "can't",
+          "startMs": 28590,
+          "endMs": 28900
+        },
+        {
+          "w": "filter",
+          "startMs": 28900,
+          "endMs": 29366
+        },
+        {
+          "w": "water,",
+          "startMs": 29366,
+          "endMs": 29909
+        },
+        {
+          "w": "or",
+          "startMs": 29909,
+          "endMs": 30064
+        },
+        {
+          "w": "boil",
+          "startMs": 30064,
+          "endMs": 30375
+        },
+        {
+          "w": "it",
+          "startMs": 30375,
+          "endMs": 30530
+        },
+        {
+          "w": "without",
+          "startMs": 30530,
+          "endMs": 31073
+        },
+        {
+          "w": "a",
+          "startMs": 31073,
+          "endMs": 31151
+        },
+        {
+          "w": "pot.",
+          "startMs": 31151,
+          "endMs": 31694
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "So you try to make fire. You've watched it a thousand times. [pause 0.4s] But it takes dry wood, the right technique, and hours of effort. Most modern people fail. And night is coming.",
+      "startMs": 32094,
+      "endMs": 42990,
+      "words": [
+        {
+          "w": "So",
+          "startMs": 32094,
+          "endMs": 32224
+        },
+        {
+          "w": "you",
+          "startMs": 32224,
+          "endMs": 32420
+        },
+        {
+          "w": "try",
+          "startMs": 32420,
+          "endMs": 32615
+        },
+        {
+          "w": "to",
+          "startMs": 32615,
+          "endMs": 32746
+        },
+        {
+          "w": "make",
+          "startMs": 32746,
+          "endMs": 33007
+        },
+        {
+          "w": "fire.",
+          "startMs": 33007,
+          "endMs": 33528
+        },
+        {
+          "w": "You've",
+          "startMs": 33528,
+          "endMs": 33854
+        },
+        {
+          "w": "watched",
+          "startMs": 33854,
+          "endMs": 34310
+        },
+        {
+          "w": "it",
+          "startMs": 34310,
+          "endMs": 34441
+        },
+        {
+          "w": "a",
+          "startMs": 34441,
+          "endMs": 34506
+        },
+        {
+          "w": "thousand",
+          "startMs": 34506,
+          "endMs": 35027
+        },
+        {
+          "w": "times.",
+          "startMs": 35027,
+          "endMs": 35614
+        },
+        {
+          "w": "But",
+          "startMs": 36014,
+          "endMs": 36219
+        },
+        {
+          "w": "it",
+          "startMs": 36219,
+          "endMs": 36356
+        },
+        {
+          "w": "takes",
+          "startMs": 36356,
+          "endMs": 36698
+        },
+        {
+          "w": "dry",
+          "startMs": 36698,
+          "endMs": 36903
+        },
+        {
+          "w": "wood,",
+          "startMs": 36903,
+          "endMs": 37313
+        },
+        {
+          "w": "the",
+          "startMs": 37313,
+          "endMs": 37519
+        },
+        {
+          "w": "right",
+          "startMs": 37519,
+          "endMs": 37861
+        },
+        {
+          "w": "technique,",
+          "startMs": 37861,
+          "endMs": 38613
+        },
+        {
+          "w": "and",
+          "startMs": 38613,
+          "endMs": 38818
+        },
+        {
+          "w": "hours",
+          "startMs": 38818,
+          "endMs": 39160
+        },
+        {
+          "w": "of",
+          "startMs": 39160,
+          "endMs": 39297
+        },
+        {
+          "w": "effort.",
+          "startMs": 39297,
+          "endMs": 39981
+        },
+        {
+          "w": "Most",
+          "startMs": 39981,
+          "endMs": 40254
+        },
+        {
+          "w": "modern",
+          "startMs": 40254,
+          "endMs": 40665
+        },
+        {
+          "w": "people",
+          "startMs": 40665,
+          "endMs": 41075
+        },
+        {
+          "w": "fail.",
+          "startMs": 41075,
+          "endMs": 41622
+        },
+        {
+          "w": "And",
+          "startMs": 41622,
+          "endMs": 41827
+        },
+        {
+          "w": "night",
+          "startMs": 41827,
+          "endMs": 42169
+        },
+        {
+          "w": "is",
+          "startMs": 42169,
+          "endMs": 42306
+        },
+        {
+          "w": "coming.",
+          "startMs": 42306,
+          "endMs": 42990
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "Then there's food. You know some plants are poisonous. In practice, they all look like plants. [pause 0.4s] One wrong berry, and your first lesson is also your last.",
+      "startMs": 43390,
+      "endMs": 53340,
+      "words": [
+        {
+          "w": "Then",
+          "startMs": 43390,
+          "endMs": 43648
+        },
+        {
+          "w": "there's",
+          "startMs": 43648,
+          "endMs": 44035
+        },
+        {
+          "w": "food.",
+          "startMs": 44035,
+          "endMs": 44551
+        },
+        {
+          "w": "You",
+          "startMs": 44551,
+          "endMs": 44745
+        },
+        {
+          "w": "know",
+          "startMs": 44745,
+          "endMs": 45003
+        },
+        {
+          "w": "some",
+          "startMs": 45003,
+          "endMs": 45261
+        },
+        {
+          "w": "plants",
+          "startMs": 45261,
+          "endMs": 45648
+        },
+        {
+          "w": "are",
+          "startMs": 45648,
+          "endMs": 45841
+        },
+        {
+          "w": "poisonous.",
+          "startMs": 45841,
+          "endMs": 46680
+        },
+        {
+          "w": "In",
+          "startMs": 46680,
+          "endMs": 46809
+        },
+        {
+          "w": "practice,",
+          "startMs": 46809,
+          "endMs": 47454
+        },
+        {
+          "w": "they",
+          "startMs": 47454,
+          "endMs": 47712
+        },
+        {
+          "w": "all",
+          "startMs": 47712,
+          "endMs": 47905
+        },
+        {
+          "w": "look",
+          "startMs": 47905,
+          "endMs": 48163
+        },
+        {
+          "w": "like",
+          "startMs": 48163,
+          "endMs": 48421
+        },
+        {
+          "w": "plants.",
+          "startMs": 48421,
+          "endMs": 49066
+        },
+        {
+          "w": "One",
+          "startMs": 49466,
+          "endMs": 49694
+        },
+        {
+          "w": "wrong",
+          "startMs": 49694,
+          "endMs": 50074
+        },
+        {
+          "w": "berry,",
+          "startMs": 50074,
+          "endMs": 50605
+        },
+        {
+          "w": "and",
+          "startMs": 50605,
+          "endMs": 50833
+        },
+        {
+          "w": "your",
+          "startMs": 50833,
+          "endMs": 51137
+        },
+        {
+          "w": "first",
+          "startMs": 51137,
+          "endMs": 51517
+        },
+        {
+          "w": "lesson",
+          "startMs": 51517,
+          "endMs": 51973
+        },
+        {
+          "w": "is",
+          "startMs": 51973,
+          "endMs": 52125
+        },
+        {
+          "w": "also",
+          "startMs": 52125,
+          "endMs": 52428
+        },
+        {
+          "w": "your",
+          "startMs": 52428,
+          "endMs": 52732
+        },
+        {
+          "w": "last.",
+          "startMs": 52732,
+          "endMs": 53340
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "Here's the twist. Your knowledge isn't useless. It just can't save you alone. [pause 0.6s] Knowing why something works is not the same as knowing how to do it.",
+      "startMs": 53740,
+      "endMs": 63628,
+      "words": [
+        {
+          "w": "Here's",
+          "startMs": 53740,
+          "endMs": 54117
+        },
+        {
+          "w": "the",
+          "startMs": 54117,
+          "endMs": 54343
+        },
+        {
+          "w": "twist.",
+          "startMs": 54343,
+          "endMs": 55021
+        },
+        {
+          "w": "Your",
+          "startMs": 55021,
+          "endMs": 55322
+        },
+        {
+          "w": "knowledge",
+          "startMs": 55322,
+          "endMs": 56001
+        },
+        {
+          "w": "isn't",
+          "startMs": 56001,
+          "endMs": 56302
+        },
+        {
+          "w": "useless.",
+          "startMs": 56302,
+          "endMs": 57131
+        },
+        {
+          "w": "It",
+          "startMs": 57131,
+          "endMs": 57282
+        },
+        {
+          "w": "just",
+          "startMs": 57282,
+          "endMs": 57583
+        },
+        {
+          "w": "can't",
+          "startMs": 57583,
+          "endMs": 57884
+        },
+        {
+          "w": "save",
+          "startMs": 57884,
+          "endMs": 58186
+        },
+        {
+          "w": "you",
+          "startMs": 58186,
+          "endMs": 58412
+        },
+        {
+          "w": "alone.",
+          "startMs": 58412,
+          "endMs": 59090
+        },
+        {
+          "w": "Knowing",
+          "startMs": 59690,
+          "endMs": 60165
+        },
+        {
+          "w": "why",
+          "startMs": 60165,
+          "endMs": 60369
+        },
+        {
+          "w": "something",
+          "startMs": 60369,
+          "endMs": 60980
+        },
+        {
+          "w": "works",
+          "startMs": 60980,
+          "endMs": 61320
+        },
+        {
+          "w": "is",
+          "startMs": 61320,
+          "endMs": 61455
+        },
+        {
+          "w": "not",
+          "startMs": 61455,
+          "endMs": 61659
+        },
+        {
+          "w": "the",
+          "startMs": 61659,
+          "endMs": 61863
+        },
+        {
+          "w": "same",
+          "startMs": 61863,
+          "endMs": 62134
+        },
+        {
+          "w": "as",
+          "startMs": 62134,
+          "endMs": 62270
+        },
+        {
+          "w": "knowing",
+          "startMs": 62270,
+          "endMs": 62745
+        },
+        {
+          "w": "how",
+          "startMs": 62745,
+          "endMs": 62949
+        },
+        {
+          "w": "to",
+          "startMs": 62949,
+          "endMs": 63085
+        },
+        {
+          "w": "do",
+          "startMs": 63085,
+          "endMs": 63221
+        },
+        {
+          "w": "it.",
+          "startMs": 63221,
+          "endMs": 63628
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "The survivors in this world belong to a group. Because the moment you join one, you can teach, trade, and be taught. [pause 0.5s] That's how humans always won. Not alone. Together.",
+      "startMs": 64028,
+      "endMs": 75019,
+      "words": [
+        {
+          "w": "The",
+          "startMs": 64028,
+          "endMs": 64219
+        },
+        {
+          "w": "survivors",
+          "startMs": 64219,
+          "endMs": 64792
+        },
+        {
+          "w": "in",
+          "startMs": 64792,
+          "endMs": 64919
+        },
+        {
+          "w": "this",
+          "startMs": 64919,
+          "endMs": 65174
+        },
+        {
+          "w": "world",
+          "startMs": 65174,
+          "endMs": 65492
+        },
+        {
+          "w": "belong",
+          "startMs": 65492,
+          "endMs": 65875
+        },
+        {
+          "w": "to",
+          "startMs": 65875,
+          "endMs": 66002
+        },
+        {
+          "w": "a",
+          "startMs": 66002,
+          "endMs": 66066
+        },
+        {
+          "w": "group.",
+          "startMs": 66066,
+          "endMs": 66639
+        },
+        {
+          "w": "Because",
+          "startMs": 66639,
+          "endMs": 67084
+        },
+        {
+          "w": "the",
+          "startMs": 67084,
+          "endMs": 67275
+        },
+        {
+          "w": "moment",
+          "startMs": 67275,
+          "endMs": 67657
+        },
+        {
+          "w": "you",
+          "startMs": 67657,
+          "endMs": 67848
+        },
+        {
+          "w": "join",
+          "startMs": 67848,
+          "endMs": 68103
+        },
+        {
+          "w": "one,",
+          "startMs": 68103,
+          "endMs": 68421
+        },
+        {
+          "w": "you",
+          "startMs": 68421,
+          "endMs": 68612
+        },
+        {
+          "w": "can",
+          "startMs": 68612,
+          "endMs": 68803
+        },
+        {
+          "w": "teach,",
+          "startMs": 68803,
+          "endMs": 69249
+        },
+        {
+          "w": "trade,",
+          "startMs": 69249,
+          "endMs": 69695
+        },
+        {
+          "w": "and",
+          "startMs": 69695,
+          "endMs": 69886
+        },
+        {
+          "w": "be",
+          "startMs": 69886,
+          "endMs": 70013
+        },
+        {
+          "w": "taught.",
+          "startMs": 70013,
+          "endMs": 70650
+        },
+        {
+          "w": "That's",
+          "startMs": 71150,
+          "endMs": 71529
+        },
+        {
+          "w": "how",
+          "startMs": 71529,
+          "endMs": 71757
+        },
+        {
+          "w": "humans",
+          "startMs": 71757,
+          "endMs": 72212
+        },
+        {
+          "w": "always",
+          "startMs": 72212,
+          "endMs": 72667
+        },
+        {
+          "w": "won.",
+          "startMs": 72667,
+          "endMs": 73198
+        },
+        {
+          "w": "Not",
+          "startMs": 73198,
+          "endMs": 73426
+        },
+        {
+          "w": "alone.",
+          "startMs": 73426,
+          "endMs": 74109
+        },
+        {
+          "w": "Together.",
+          "startMs": 74109,
+          "endMs": 75019
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "So the real question isn't whether you'd survive. [pause 0.5s] It's whether you could convince a stranger to trust you. [pause 0.7s] Could you?",
+      "startMs": 75419,
+      "endMs": 83158,
+      "words": [
+        {
+          "w": "So",
+          "startMs": 75419,
+          "endMs": 75553
+        },
+        {
+          "w": "the",
+          "startMs": 75553,
+          "endMs": 75754
+        },
+        {
+          "w": "real",
+          "startMs": 75754,
+          "endMs": 76022
+        },
+        {
+          "w": "question",
+          "startMs": 76022,
+          "endMs": 76557
+        },
+        {
+          "w": "isn't",
+          "startMs": 76557,
+          "endMs": 76825
+        },
+        {
+          "w": "whether",
+          "startMs": 76825,
+          "endMs": 77294
+        },
+        {
+          "w": "you'd",
+          "startMs": 77294,
+          "endMs": 77562
+        },
+        {
+          "w": "survive.",
+          "startMs": 77562,
+          "endMs": 78298
+        },
+        {
+          "w": "It's",
+          "startMs": 78798,
+          "endMs": 78988
+        },
+        {
+          "w": "whether",
+          "startMs": 78988,
+          "endMs": 79431
+        },
+        {
+          "w": "you",
+          "startMs": 79431,
+          "endMs": 79621
+        },
+        {
+          "w": "could",
+          "startMs": 79621,
+          "endMs": 79938
+        },
+        {
+          "w": "convince",
+          "startMs": 79938,
+          "endMs": 80444
+        },
+        {
+          "w": "a",
+          "startMs": 80444,
+          "endMs": 80508
+        },
+        {
+          "w": "stranger",
+          "startMs": 80508,
+          "endMs": 81014
+        },
+        {
+          "w": "to",
+          "startMs": 81014,
+          "endMs": 81141
+        },
+        {
+          "w": "trust",
+          "startMs": 81141,
+          "endMs": 81458
+        },
+        {
+          "w": "you.",
+          "startMs": 81458,
+          "endMs": 81901
+        },
+        {
+          "w": "Could",
+          "startMs": 82601,
+          "endMs": 82833
+        },
+        {
+          "w": "you?",
+          "startMs": 82833,
+          "endMs": 83158
+        }
+      ]
+    }
+  ]
+}

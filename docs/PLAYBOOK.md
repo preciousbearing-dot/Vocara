@@ -51,6 +51,7 @@ Rules from now on, BEFORE telling him a video is ready:
 - CAPTION SYNC: do not trust estimated word times. Align words to the audio (syllable-onset / energy alignment between natural breaths, or get true alignment) and run an automated check of caption onset vs audio onset; target within 0.12 s. Captions must never run behind and catch up.
 - LOOK AT MORE FRAMES: contact sheet every 1 s plus every shot start/end plus every overlay's peak; zoom in on any thought bubble or icon.
 - Say what was NOT verified. Do not call a video "postable" until the gate passes.
+- STORY READABILITY: someone who has not read the script must understand each action from the picture alone (2026-11-13: the fire-making beat only showed a character holding a stick; strangers would not know it was fire-making). Draw the real action clearly: close-up hand drill/bow drill, visible smoke, glowing ember, plus an icon or label. Design a clear visual for every action verb in the script.
 - FORMAT: he chose 16:9 landscape for the next test (2026-11-13). Engine is 1080x1920 today; make W,H configurable (1920x1080), re-derive framing (visible width at distance d = d*W/FOC), and put captions in a lower-third that fits. Vertical Shorts come later from the same shot list.
 
 ## 7. Status (2026-11-13)

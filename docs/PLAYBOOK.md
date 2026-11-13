@@ -6,7 +6,7 @@ Thesis is Precious's YouTube channel (Shorts first, long-form later). Goals: (1)
 
 ## 2. People and tools
 - Precious (25, Nigeria, Africa/Lagos time). Works mostly from his phone; has a laptop that is NOT linked to Claude sessions. Free Claude plan: no scheduled tasks, no browser control. Bash network is off: no pip/npm/curl downloads, so use only what is installed (python3 numpy/scipy/PIL, node, ffmpeg, Playwright+Chromium, Inter font).
-- He dictates by voice, so words are sometimes garbled ("Cloud" = Claude, "chart" = chat, "Vokara" = Vocara). He asked to be corrected kindly. Never mock.
+- He dictates by voice, so the transcript sometimes has wrong or similar-sounding words ("Cloud" = Claude, "chart" = chat, "Vokara" = Vocara). Silently work out what he meant and answer that. NEVER point out or correct the slip (he asked for exactly this on 2026-11-13).
 - Vocara: Android app, repo preciousbearing-dot/Vocara (see its CLAUDE.md). Output per video: <id>-<name>.wav (24 kHz) + <id>-<name>.timings.json (scene start/end ms exact, word times ESTIMATED).
 - Voice used so far: Gemini "Leda", style "Confident storyteller", model gemini-3.8-flash-tts. Style notes must be SHORT (long ones drift or get read aloud).
 - Claude Second Brain (Notion) holds state and decisions; this repo branch holds the code; the skill "thesis-video-studio" holds the procedure; Claude memory holds facts about Precious.

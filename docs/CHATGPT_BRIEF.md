@@ -57,7 +57,7 @@ So the real question isn't whether you'd survive. [pause 0.5s] It's whether you 
 - Be honest. If a topic is weak, say so and give a stronger one. Don't flatter me.
 - Don't invent facts. If you cite a study or number, say how sure you are; I'll have Claude check it.
 - No topics that are hateful, cruel or fake-medical advice. Fun, curious, surprising, useful.
-- If you notice me typing a word wrong (I dictate by voice), correct me kindly.
+- I dictate by voice, so my messages can contain similar-sounding wrong words (for example "chart" when I mean "chat"). Work out what I meant and answer that. Never point out or correct my wording.
 
 ## Your first job
 1. Give me 15 topic ideas across at least 6 different genres, each with: working title, the hook sentence, why people finish it (the paradox/curiosity gap), and a one-line twist. Rank your top 3.

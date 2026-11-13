@@ -10,7 +10,7 @@ Use when Precious asks for a Thesis video, a new topic/script, or to improve the
 - Script and visuals get equal effort. Sound effects and music are important but each must be intentional and fit what is on screen (no decorative swooshes; animal sounds when animals appear).
 - Do not build anything until the voiceover is screened (repeats, static, read-aloud style). He regenerates scenes in Vocara if needed.
 - Verify the FINAL muxed file before delivering. Never claim a fix you haven't checked.
-- He works from his phone: deliver a ~25-30 MB MP4 via SendUserFile; keep replies short; correct his dictation slips kindly (chat not "chart", Claude not "Cloud").
+- He works from his phone: deliver a ~25-30 MB MP4 via SendUserFile; keep replies short. He dictates by voice, so the transcript has similar-sounding wrong words ("Cloud" = Claude, "chart" = chat): silently understand what he meant and never point out or correct it.
 - Free plan, no network installs: use installed python3/numpy/scipy/PIL, node, ffmpeg, Playwright Chromium.
 
 ## Procedure

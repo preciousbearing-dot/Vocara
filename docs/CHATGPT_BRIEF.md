@@ -1,32 +1,29 @@
-# Brief for ChatGPT: the Thesis channel (paste this whole message into a new ChatGPT chat)
+# Message for ChatGPT (paste the whole thing)
 
-You are joining a small creative team. I'm Precious, 25, in Nigeria. I work mostly from my phone. Claude (Anthropic's AI) is my builder: it writes code that renders my videos. I want you as my script writer and topic brainstormer. Read everything first, then reply with the "Your first job" section.
+You already know me and the Thesis channel from our earlier work, so I'm skipping the intro. Check your memory if you need a refresher. What has changed is the workflow.
 
-## Mission and vision
-I run a YouTube channel called **Thesis**. Two goals: (1) earn money from it, (2) build an audience I can introduce my own apps and books to. I have almost no budget, so every video is made for free: a voiceover app I built (Vocara, uses my own free Gemini key) plus Claude's code that draws and animates the video, plus synthesized music and sound effects.
+## What changed
+**Old way:** we wrote scenes and used a video-generation AI (Google Flow) to generate the scene images bit by bit.
+**New way:** Claude (Anthropic) now writes code that draws and animates the whole video, so there are no video-generation credits. The pipeline: script -> I record the voiceover in my own app Vocara (free Gemini voice, one request per scene, optional `[pause 0.5s]` tags) -> Claude screens the audio, writes a shot list and renders the video with code (a fake-3D camera on HTML canvas, flat cartoon characters, word-by-word captions, a moving camera in every shot) -> Claude composes music and sound effects with code -> MP4. Claude keeps the whole method as a living skill and notes (a playbook of workflow, rules and past mistakes). The channel is also no longer limited to documentary or science: any topic that works.
 
-Thesis is NOT limited to documentary or science. It's a channel of topics that work: any subject with a strong hook that people finish watching. Examples of directions (think wider than these): survival thought-experiments ("could you survive X?"), psychology and everyday-life paradoxes, history told as "what if it were you", money and power, technology myths, strange rules of the world, short stories with a twist, "why do we...?" questions. Be creative and broad. Judge every topic by: does the first sentence make someone stop scrolling, and does the middle keep them to the end?
+## Where we are
+- Test 2 ("Stone Age", you wake up in the Stone Age and your modern knowledge can't save you alone) looked far better than test 1, but I rejected it for posting: the first frame was a blank card, captions drifted out of sync with the voice, some icons and bubbles were cut off the screen, and the fire-making beat wasn't recognizable without having read the script.
+- New rules from that: designed cover frame; every overlay inside the safe area on every frame; captions aligned to real audio; every action understandable from the picture alone; nothing called ready until checked.
+- Next test: **16:9 landscape**, and a **more interesting story** than Stone Age. The look we're chasing is a Short I love ("Why the Second Draw Always Wins", Ricks Clips): flat 2D characters in a 3D-looking world, constant camera movement, a colour mood per beat, a second-person paradox hook, fast pace (~250 words/min). We study the method, we don't copy their characters or world.
 
-## What we've made so far
-- Test 1: "Horizon" (flat vs curved horizon). Too slow, too calm.
-- Test 2: "Stone Age" (you wake up in the Stone Age; your modern knowledge can't save you alone; the point: survival is about groups, trust and doing, not knowing). ~84 seconds, vertical 9:16, about 220 words. I loved the result: a moving fake-3D camera, flat cartoon characters with noodle limbs, one-word-at-a-time captions, intentional sound effects, music that follows the story. The full script is below as a style reference.
-- The visual style we're chasing is a Short I love ("Why the Second Draw Always Wins", Ricks Clips, ~9.4M views): flat 2D characters in a 3D-looking world, constant camera movement, colour mood per beat, a hook told in second person, paradox structure, fast pace (~250 words/min). We're studying the method, not copying their characters.
-- I will post both Shorts (vertical) and long-form later. Right now we are testing to find our visual DNA.
+## Your jobs
+1. **Topics.** Give me 15 ideas across at least 6 different genres, each with: working title, the hook sentence, why people finish it (the curiosity gap), and a one-line twist. Rank your top 3. Remember each one has to be drawable with flat characters, simple props, icons and a moving camera, and every action must be readable without narration.
+2. **Scripts.** When I pick one: 8 scenes for ~85 s (22-32 spoken words each, ~210-240 total), second person, short sentences, no filler, easy for a TTS voice (spell numbers as spoken, no emojis or stage directions in the spoken text). Scene 1's first sentence is the hook; a turn around scene 5; the last scene lands emotionally and ends on a question. Optional `[pause 0.5s]` (max 2 per scene). After each scene add one `VISUAL:` line: setting, who is there, the one striking image or camera move, and what the action looks like on screen. For landscape, think wide frames.
+3. **After you've read all this, tell me honestly: can you also render the videos yourself?** If you have code execution (Python, a headless browser, ffmpeg or similar), could you produce the video with the same method, or even a better one? Tell me exactly what you can run, what you can't (for example, can you run a headless Chromium? write MP4 files? synthesize audio?), and how you'd do it. If you can, tell me what you'd need from me. I can paste in Claude's engine code (about 100 KB of JavaScript and Python) and playbook for you to read. Don't pretend; if you can't, say so and we keep you on topics and scripts.
 
-## How a video gets made (so you can write scripts that fit)
-1. Script (you or Claude). 2. I generate the voiceover in Vocara: each SCENE is one request, with optional `[pause 0.5s]` tags inside a scene. 3. Claude screens the audio, then writes a shot list and renders the video with code. 4. Claude mixes sound and delivers an MP4. Claude keeps a "living skill" and notes so it remembers everything; you cannot render the video (you don't have our engine), but you can make the script and shot ideas excellent.
+## Rules
+- Be honest. If a topic is weak, say so and give a stronger one. Don't flatter me.
+- Don't invent facts. If you cite a study or number, tell me how sure you are; Claude will check it.
+- Nothing hateful, cruel or fake medical advice. Fun, curious, surprising, useful.
+- I dictate by voice, so my messages can contain similar-sounding wrong words. Work out what I meant and answer that. Never point out or correct my wording.
+- Keep replies tight; I read on a phone.
 
-## Script format I need from you
-- 8 scenes for a ~85-second Short (about 8-11 seconds each, 22-32 words per scene). Total ~210-240 words.
-- Plain spoken English, second person ("you"), short sentences, zero filler, easy for a TTS voice to read. No emojis, no stage directions inside the spoken text, no hard-to-pronounce symbols. Spell numbers the way they should be said.
-- Scene 1 first sentence = the hook (a paradox, a threat, or a surprising claim). Around scene 5 put a turn ("Here's the twist"). Final scene lands emotionally and ends on a question or line that makes people replay or comment.
-- Optional `[pause 0.5s]` where the narrator should breathe (max 2 per scene).
-- After each scene, add one line "VISUAL:" describing what should be on screen (setting, who is there, one striking image or camera move). Claude will build it; keep ideas drawable with flat characters, simple props, icons, big text and a moving camera.
-- Output each scene as: `Scene N` / spoken text / `VISUAL:` line.
-
-## Reference script (Stone Age test, for tone and structure)
-
-Voice: Leda, model gemini-3.8-flash-tts, style: Speak as a Confident storyteller..Fast, bright documentary narrator. Confident, warm and a little amused, like someone who loves the story they are telling. Brisk pace, about 160 words per minute, with no long pauses. Lift the pitch slightly on surprising facts and slow down for one beat just before a reveal.
+## Reference script (Stone Age, for tone and structure only; we are not reusing the topic)
 
 ## Scene 1
 You wake up in the Stone Age. Your memory is perfect. You know electricity, medicine, even how a phone works. [pause 0.5s] Surely, you'd survive. Right?
@@ -52,15 +49,3 @@ The survivors in this world belong to a group. Because the moment you join one, 
 ## Scene 8
 So the real question isn't whether you'd survive. [pause 0.5s] It's whether you could convince a stranger to trust you. [pause 0.7s] Could you?
 
-
-## Rules
-- Be honest. If a topic is weak, say so and give a stronger one. Don't flatter me.
-- Don't invent facts. If you cite a study or number, say how sure you are; I'll have Claude check it.
-- No topics that are hateful, cruel or fake-medical advice. Fun, curious, surprising, useful.
-- I dictate by voice, so my messages can contain similar-sounding wrong words (for example "chart" when I mean "chat"). Work out what I meant and answer that. Never point out or correct my wording.
-
-## Your first job
-1. Give me 15 topic ideas across at least 6 different genres, each with: working title, the hook sentence, why people finish it (the paradox/curiosity gap), and a one-line twist. Rank your top 3.
-2. Ask me up to 3 questions if you need them.
-3. When I pick one, write the full 8-scene script in the format above, then offer 3 alternative opening lines for scene 1.
-Keep replies tight; I read on a phone.

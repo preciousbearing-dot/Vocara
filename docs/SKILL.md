@@ -13,6 +13,9 @@ Use when Precious asks for a Thesis video, a new topic/script, or to improve the
 - He works from his phone: deliver a ~25-30 MB MP4 via SendUserFile; keep replies short. He dictates by voice, so the transcript has similar-sounding wrong words ("Cloud" = Claude, "chart" = chat): silently understand what he meant and never point out or correct it.
 - Free plan, no network installs: use installed python3/numpy/scipy/PIL, node, ffmpeg, Playwright Chromium.
 
+## QA GATE (mandatory, added 2026-11-13)
+Never call a video ready or postable until: frame 0 is a designed cover; every overlay is inside the safe area on EVERY frame (automated check); captions align to real audio onsets within 0.12 s (automated check); contact sheets every 1 s were read; and the reply lists what was not verified. Precious found cut-off icons, a blank first frame and drifting captions in v2 that I missed. Details: docs/PLAYBOOK.md section 6b. Next test format: 16:9 landscape.
+
 ## Procedure
 1. Topic + script (second-person paradox hook, twist ~65%, closing question, 8 scenes, `[pause 0.5s]` tags, ~220 words/85 s).
 2. He generates wav + timings.json in Vocara (Leda, "Confident storyteller", gemini-3.8-flash-tts, short style) and attaches them.

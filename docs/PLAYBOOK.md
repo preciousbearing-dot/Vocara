@@ -42,7 +42,19 @@ Thesis is Precious's YouTube channel (Shorts first, long-form later). Goals: (1)
 ## 6. Reference study (a Short Precious loves: "Why the Second Draw Always Wins", Ricks Clips, 9.4M views)
 Flat 2D characters in a 3D-looking world, nonstop camera, beat-based colour moods, FX, single-word captions, second-person paradox hook, ~250 wpm. Do NOT copy its characters/world; copy the method (hook, pacing, camera energy, caption rhythm, mood per beat).
 
-## 7. Status (2026-11-12)
+## 6b. QA GATE (added 2026-11-13 after Precious found real errors in Stone Age v2 that I had called "postable")
+He watched v2 repeatedly and found: (1) first frame is a blank brown card, so no one would click; (2) captions fall behind the voice then sprint to catch up; (3) graphics cut off the screen: the "1000x" thought bubble, the pot icon for "no pot to boil water", icons in the thought-bubble shots; (4) the fire/time-lapse beat did not read right (unclear; ask). He will not post v2.
+Causes found: (1) frame 0 was black-to-canopy fade, not a designed cover; (2) word times are char-proportional estimates, 21% of natural breaths sit more than 0.25 s from the assumed word boundary (max 0.59 s), so captions drift between anchors; (3) icons/bubbles were placed in WORLD coordinates and never checked against the 1080x1920 frame; I only looked at ~25 sampled stills and never at every frame.
+Rules from now on, BEFORE telling him a video is ready:
+- COVER: frame 0 must be a designed thumbnail-quality hook frame (big subject, bold text, no fades from black). Render it and look at it.
+- SAFE AREA: every overlay (icon, bubble, label, pot, counter) must be fully inside the frame with a margin (about 6% sides, 8% top; keep clear of caption zone). Build it in: register each overlay's screen bounding box and clamp it; run an automated pass over EVERY frame that fails if any registered box leaves the safe area. Fix by moving the object or the camera, never by hoping.
+- CAPTION SYNC: do not trust estimated word times. Align words to the audio (syllable-onset / energy alignment between natural breaths, or get true alignment) and run an automated check of caption onset vs audio onset; target within 0.12 s. Captions must never run behind and catch up.
+- LOOK AT MORE FRAMES: contact sheet every 1 s plus every shot start/end plus every overlay's peak; zoom in on any thought bubble or icon.
+- Say what was NOT verified. Do not call a video "postable" until the gate passes.
+- FORMAT: he chose 16:9 landscape for the next test (2026-11-13). Engine is 1080x1920 today; make W,H configurable (1920x1080), re-derive framing (visible width at distance d = d*W/FOC), and put captions in a lower-third that fits. Vertical Shorts come later from the same shot list.
+
+## 7. Status (2026-11-13)
+- Stone Age v2 REJECTED by Precious for posting (see 6b). Next test: a more interesting story (he is deciding whether to keep Stone Age), 16:9.
 - Stone Age test v2 (vertical, 84 s) delivered; Precious: "way better... I love this". He is considering posting it as a test Short.
 - Visual DNA is still being discovered. Known gaps vs the reference: characters are simple (no outlines/shading detail, no real walk-toward-camera), opening 2 s is a dark canopy (weak first frame), speech is 160 wpm vs reference 250, backgrounds fairly empty, sound is all synthesized (no recorded samples).
 

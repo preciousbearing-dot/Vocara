@@ -1,6 +1,25 @@
 // shared drawing kit
-const c=document.getElementById('c'),x=c.getContext('2d'),W=1080,H=1920;
+// frame size is configurable: video.html?w=1920&h=1080 (default stays 1080x1920 vertical)
+const QS=new URLSearchParams(location.search);
+const c=document.getElementById('c'),W=+(QS.get('w')||1080),H=+(QS.get('h')||1920);
+c.width=W;c.height=H;const x=c.getContext('2d');
 const INK='#1a1530';
+// ===== QA gate built into the engine: caption zone, safe area, overlay registry =====
+const LAND=W>H;
+const CAP={y:LAND?H*.865:H*.745,size:LAND?104:150};CAP.top=CAP.y-CAP.size*.75;CAP.bot=CAP.y+CAP.size*.75;
+const SAFE={l:.06,t:.08};           // 6% sides, 8% top; overlays also stay clear of the caption zone
+let OVL=[];                          // every overlay drawn this frame: {n,x0,y0,x1,y1,fit,focus}
+function boxOf(M,w,h){const xs=[],ys=[];[[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].forEach(p=>{const q=M.transformPoint(new DOMPoint(p[0],p[1]));xs.push(q.x);ys.push(q.y)});return{x0:Math.min(...xs),y0:Math.min(...ys),x1:Math.max(...xs),y1:Math.max(...ys)}}
+// call inside save()/restore(), after translate/scale, with the overlay's local box (centred on 0,0).
+// Shrinks and/or shifts the transform so the box lies inside the safe area, then registers the final box.
+function fitSafe(name,w,h,opt={}){const M=x.getTransform();let b=boxOf(M,w,h);
+ const R={x0:W*SAFE.l,x1:W*(1-SAFE.l),y0:H*SAFE.t,y1:opt.caption?H*.96:CAP.top-H*.012};
+ const bw=b.x1-b.x0,bh=b.y1-b.y0,s=Math.min(1,(R.x1-R.x0)/bw,(R.y1-R.y0)/bh),cx=(b.x0+b.x1)/2,cy=(b.y0+b.y1)/2,hw=bw*s/2,hh=bh*s/2;
+ const ncx=Math.min(R.x1-hw,Math.max(R.x0+hw,cx)),ncy=Math.min(R.y1-hh,Math.max(R.y0+hh,cy));
+ let fit=0;if(s<.9999||Math.abs(ncx-cx)>.5||Math.abs(ncy-cy)>.5){fit=1;x.setTransform(new DOMMatrix().translate(ncx,ncy).scale(s).translate(-cx,-cy).multiply(M));b=boxOf(x.getTransform(),w,h)}
+ OVL.push(Object.assign({n:name,fit},b));return fit}
+// story-critical prop: registered unclamped; the QA pass requires it to be almost fully on screen while registered
+function focusReg(name,w,h){OVL.push(Object.assign({n:name,focus:1},boxOf(x.getTransform(),w,h)))}
 let T=0; // global time
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const ease=v=>v*v*(3-2*v);
